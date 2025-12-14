@@ -1,0 +1,19 @@
+{
+  "Version": 1,
+  "Hash": "XYvNd7y1KdImNZltU9trIb3js9Z64T8jLb1ccN9tkfo=",
+  "Source": "FusionPayProxy",
+  "BasePath": "_content/FusionPayProxy",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [
+    {
+      "Name": "FusionPayProxy\\wwwroot",
+      "Source": "FusionPayProxy",
+      "ContentRoot": "C:\\FusionPayProxy\\FusionPayProxy\\wwwroot\\",
+      "BasePath": "_content/FusionPayProxy",
+      "Pattern": "**"
+    }
+  ],
+  "Assets": []
+}
