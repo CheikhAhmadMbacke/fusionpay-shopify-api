@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: afrokingvap-fusionpay-api
+    env: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: PORT
+        value: 8080
+      - key: ConnectionStrings__DefaultConnection
+        value: Data Source=/opt/render/project/src/data/fusionpay.db
+      - key: FusionPay__ApiBaseUrl
+        value: https://www.pay.moneyfusion.net/Senbib/c2af5ab0ca89c711/pay/
+      - key: FusionPay__ApiKey
+        sync: false  # À remplir manuellement dans le dashboard Render
+      - key: Shopify__AccessToken
+        sync: false  # À remplir manuellement dans le dashboard Render
+      - key: Shopify__ShopDomain
+        value: afrokingvap.com
+      - key: AllowedOrigins__0
+        value: https://afrokingvap.com
+      - key: AllowedOrigins__1
+        value: https://checkout.shopify.com
+    disk:
+      name: sqlite-data
+      mountPath: /opt/render/project/src/data
+      sizeGB: 1

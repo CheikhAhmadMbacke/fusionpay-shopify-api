@@ -3,6 +3,9 @@ using FusionPayProxy.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+// Configuration du port pour Render
+var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
+builder.WebHost.UseUrls($"http://*:{port}");
 
 // Add services to the container
 builder.Services.AddControllers()
@@ -23,19 +26,18 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// Configure CORS
-var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+// Configuration CORS (MODIFIÉ)
+var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()
     ?? new[] { "https://afrokingvap.com", "https://checkout.shopify.com" };
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("ShopifyPolicy", policy =>
-    {
-        policy.WithOrigins(allowedOrigins)
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
-    });
+    options.AddPolicy("AllowSpecificOrigins",
+        builder => builder
+            .WithOrigins(allowedOrigins)
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials());
 });
 
 // Configure SQLite Database
@@ -108,15 +110,7 @@ Console.WriteLine($"🚀 FusionPay Proxy API starting on .NET 8...");
 Console.WriteLine($"📊 Database: SQLite");
 Console.WriteLine($"🔗 CORS Origins: {string.Join(", ", allowedOrigins)}");
 
-// REMPLACEZ app.Run(); PAR :
-
-// Configuration pour Railway
-var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
-app.Urls.Add($"http://0.0.0.0:{port}");
-
 Console.WriteLine($"🚀 FusionPay Proxy API starting on port {port}");
-Console.WriteLine($"📊 Database: SQLite");
-Console.WriteLine($"🔗 CORS Origins: {string.Join(", ", allowedOrigins)}");
 Console.WriteLine($"🌐 Environment: {app.Environment.EnvironmentName}");
 
 app.Run();
