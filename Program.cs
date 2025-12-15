@@ -15,15 +15,38 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.WriteIndented = true;
     });
 
+// Configuration Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    c.SwaggerDoc("v1", new() { Title = "FusionPay Proxy API", Version = "v1" });
+    
+    // Configure l'authentification par API Key
+    c.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
     {
-        Title = "FusionPay Proxy API",
-        Version = "1.0",
-        Description = "API proxy for FusionPay payments integration with Shopify"
+        Description = "API Key nécessaire pour accéder aux endpoints",
+        Type = SecuritySchemeType.ApiKey,
+        Name = "moneyfusion-private-key",
+        In = ParameterLocation.Header,
+        Scheme = "ApiKeyScheme"
     });
+    
+    var scheme = new OpenApiSecurityScheme
+    {
+        Reference = new OpenApiReference
+        {
+            Type = ReferenceType.SecurityScheme,
+            Id = "ApiKey"
+        },
+        In = ParameterLocation.Header
+    };
+    
+    var requirement = new OpenApiSecurityRequirement
+    {
+        { scheme, new List<string>() }
+    };
+    
+    c.AddSecurityRequirement(requirement);
 });
 
 // Configuration CORS (MODIFIÉ)
@@ -83,15 +106,12 @@ using (var scope = app.Services.CreateScope())
 }
 
 // Configure the HTTP request pipeline
-if (app.Environment.IsDevelopment())
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "FusionPay Proxy API v1");
-        c.RoutePrefix = "api-docs";
-    });
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "FusionPay Proxy API v1");
+    c.RoutePrefix = "swagger";  // Accès via /swagger
+});
 // AVANT app.UseHttpsRedirection();
 if (!app.Environment.IsDevelopment())
 {
