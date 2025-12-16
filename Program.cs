@@ -61,7 +61,7 @@ builder.Services.AddSwaggerGen(c =>
 
 // Configuration CORS
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()
-    ?? new[] { "https://afrokingvap.com", "https://checkout.shopify.com" };
+    ?? new[] { "https://afrokingvap.com", "https://checkout.shopify.com", "https://fusionpay-shopify-api.onrender.com" };
 
 builder.Services.AddCors(options =>
 {
