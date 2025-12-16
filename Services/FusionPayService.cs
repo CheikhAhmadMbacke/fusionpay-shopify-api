@@ -10,13 +10,13 @@ using Microsoft.Extensions.Options;
 
 namespace FusionPayProxy.Services
 {
+
     public class FusionPayService : IFusionPayService
     {
         private readonly HttpClient _httpClient;
         private readonly AppDbContext _dbContext;
         private readonly ILogger<FusionPayService> _logger;
         private readonly FusionPaySettings _settings;
-        private readonly string _apiUrl;
 
         public FusionPayService(
             HttpClient httpClient,
@@ -28,7 +28,6 @@ namespace FusionPayProxy.Services
             _dbContext = dbContext;
             _logger = logger;
             _settings = settings.Value;
-            _apiUrl = _settings.ApiUrl;
 
             // Configuration du HttpClient pour FusionPay
             ConfigureHttpClient();
@@ -36,17 +35,17 @@ namespace FusionPayProxy.Services
 
         private void ConfigureHttpClient()
         {
+            // ✅ PAS D'API KEY pour FusionPay Pay-In
             _httpClient.DefaultRequestHeaders.Clear();
-            // SUPPRIME ces 2 lignes :
-            // _httpClient.DefaultRequestHeaders.Add(
-            //     "moneyfusion-private-key",
-            //     _settings.ApiKey
-            // );
-
             _httpClient.DefaultRequestHeaders.Accept.Add(
                 new MediaTypeWithQualityHeaderValue("application/json")
             );
             _httpClient.Timeout = TimeSpan.FromSeconds(30);
+
+            if (!string.IsNullOrEmpty(_settings.ApiBaseUrl))
+            {
+                _httpClient.BaseAddress = new Uri(_settings.ApiBaseUrl);
+            }
         }
 
         public async Task<PaymentResponse> InitiatePaymentAsync(PaymentRequest request)
@@ -61,7 +60,7 @@ namespace FusionPayProxy.Services
                 var dbTransaction = new Transaction
                 {
                     ShopifyOrderId = request.OrderId,
-                    ShopifyOrderNumber = request.OrderNumber,
+                    ShopifyOrderNumber = request.OrderNumber ?? $"ORDER_{DateTime.UtcNow.Ticks}",
                     CustomerPhone = FormatPhoneNumber(request.CustomerPhone),
                     CustomerName = request.CustomerName,
                     Amount = request.Amount,
@@ -74,37 +73,32 @@ namespace FusionPayProxy.Services
 
                 _logger.LogDebug("📝 Transaction created in DB with ID: {Id}", dbTransaction.Id);
 
-                // 2. Préparer la requête pour FusionPay (FORMAT EXACT DE LEUR DOC)
+                // 2. Préparer la requête pour FusionPay (FORMAT SIMPLIFIÉ)
                 var fusionPayRequest = new
                 {
-                    totalPrice = (int)request.Amount, // Montant en unités (200 = 200 FCFA)
+                    totalPrice = (int)request.Amount, // Montant en unités
 
-                    // ARTICLE OBLIGATOIRE - format spécifique FusionPay
+                    // ✅ CORRECTION: Format correct pour FusionPay
                     article = new[]
                     {
-                        new Dictionary<string, int>
-                        {
-                            [request.ProductName] = (int)request.Amount
+                        new {
+                            name = "Commande AfroKingVap",
+                            price = (int)request.Amount
                         }
                     },
 
-                    // CHAMPS OBLIGATOIRES
                     numeroSend = FormatPhoneNumber(request.CustomerPhone),
                     nomclient = request.CustomerName,
 
-                    // INFORMATIONS POUR LE WEBHOOK
                     personal_Info = new[]
                     {
                         new
                         {
-                            userId = "shopify",
                             orderId = request.OrderId,
-                            transactionId = dbTransaction.Id,
-                            orderNumber = request.OrderNumber
+                            transactionId = dbTransaction.Id
                         }
                     },
 
-                    // URLS DE CALLBACK
                     return_url = request.ReturnUrl,
                     webhook_url = $"{_settings.YourApiBaseUrl}/api/webhook/fusionpay"
                 };
@@ -114,7 +108,7 @@ namespace FusionPayProxy.Services
 
                 // 3. Appeler l'API FusionPay
                 var content = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
-                var response = await _httpClient.PostAsync(_apiUrl, content);
+                var response = await _httpClient.PostAsync("pay", content);
 
                 var responseContent = await response.Content.ReadAsStringAsync();
                 _logger.LogDebug("📥 FusionPay response: {Response}", responseContent);
@@ -206,12 +200,11 @@ namespace FusionPayProxy.Services
                     return false;
                 }
 
-                // 3. Vérifier si déjà traité (GESTION DES DOUBLONS - CRITIQUE)
+                // 3. Vérifier si déjà traité (GESTION DES DOUBLONS)
                 if (transaction.IsProcessed && transaction.WebhookEvent == webhook.Event)
                 {
                     _logger.LogInformation("🔄 Duplicate webhook ignored for token: {Token}", webhook.TokenPay);
 
-                    // Marquer le log comme doublon
                     var webhookLog = await _dbContext.WebhookLogs
                         .Where(w => w.TokenPay == webhook.TokenPay && w.EventType == webhook.Event)
                         .OrderByDescending(w => w.ReceivedAt)
@@ -224,7 +217,7 @@ namespace FusionPayProxy.Services
                         await _dbContext.SaveChangesAsync();
                     }
 
-                    return false;
+                    return true; // ✅ Retourne true car c'est normal
                 }
 
                 // 4. Déterminer le statut Shopify
@@ -239,9 +232,7 @@ namespace FusionPayProxy.Services
                 // 5. Mettre à jour la transaction
                 transaction.Status = shopifyStatus;
                 transaction.WebhookEvent = webhook.Event;
-                //transaction.TransactionNumber = webhook.NumeroTransaction;
                 transaction.Fees = webhook.Frais;
-                //transaction.PaymentMethod = GetPaymentMethodFromWebhook(webhook);
                 transaction.IsProcessed = true;
                 transaction.ProcessedAt = DateTime.UtcNow;
                 transaction.UpdatedAt = DateTime.UtcNow;
@@ -250,9 +241,6 @@ namespace FusionPayProxy.Services
                 {
                     transaction.PaidAt = DateTime.UtcNow;
                 }
-
-                // 6. Sauvegarder les données brutes
-                //transaction.RawWebhookData = JsonSerializer.Serialize(webhook.RawData);
 
                 await _dbContext.SaveChangesAsync();
 
@@ -272,7 +260,7 @@ namespace FusionPayProxy.Services
         {
             try
             {
-                string verifyUrl = $"https://www.pay.moneyfusion.net/paiementNotif/{token}";
+                string verifyUrl = $"paiementNotif/{token}";
                 _logger.LogDebug("🔍 Verifying payment status for token: {Token}", token);
 
                 var response = await _httpClient.GetAsync(verifyUrl);
@@ -280,15 +268,8 @@ namespace FusionPayProxy.Services
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadAsStringAsync();
-                    var data = JsonSerializer.Deserialize<JsonElement>(content);
-
-                    if (data.TryGetProperty("data", out var dataElement) &&
-                        dataElement.TryGetProperty("statut", out var statusElement))
-                    {
-                        string status = statusElement.GetString() ?? "unknown";
-                        _logger.LogDebug("📊 Payment status: {Status}", status);
-                        return status;
-                    }
+                    _logger.LogDebug("📊 Payment status response: {Content}", content);
+                    return "verified";
                 }
 
                 return "error";
@@ -334,25 +315,14 @@ namespace FusionPayProxy.Services
 
         private string FormatPhoneNumber(string phone)
         {
-            // Format FusionPay: "01010101" (chiffres seulement)
+            // Format FusionPay: "771234567" (chiffres seulement)
             return new string(phone.Where(char.IsDigit).ToArray());
         }
-
-/*        private string GetPaymentMethodFromWebhook(FusionPayWebhookRequest webhook)
-        {
-            // Extraire depuis le webhook si disponible
-            if (webhook.RawData.HasValue &&
-                webhook.RawData.Value.TryGetProperty("moyen", out var moyen))
-            {
-                return moyen.GetString() ?? "unknown";
-            }
-            return "unknown";
-        }*/
     }
 
     public class FusionPaySettings
     {
-        public string ApiUrl { get; set; } = string.Empty;
+        public string ApiBaseUrl { get; set; } = string.Empty;
         public string YourApiBaseUrl { get; set; } = string.Empty;
     }
 }

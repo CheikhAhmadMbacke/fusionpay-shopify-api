@@ -12,18 +12,15 @@ namespace FusionPayProxy.Controllers
         private readonly IFusionPayService _fusionPayService;
         private readonly ShopifyService _shopifyService;
         private readonly ILogger<WebhookController> _logger;
-        private readonly IConfiguration _configuration;
 
         public WebhookController(
             IFusionPayService fusionPayService,
             ShopifyService shopifyService,
-            ILogger<WebhookController> logger,
-            IConfiguration configuration)
+            ILogger<WebhookController> logger)
         {
             _fusionPayService = fusionPayService;
             _shopifyService = shopifyService;
             _logger = logger;
-            _configuration = configuration;
         }
 
         [HttpPost("fusionpay")]
@@ -42,36 +39,67 @@ namespace FusionPayProxy.Controllers
                     return BadRequest(new { error = "Empty body" });
                 }
 
+                _logger.LogDebug("📝 Webhook body: {Body}", body);
+
                 var jsonElement = JsonSerializer.Deserialize<JsonElement>(body);
 
-                // Extraire les données de base
-                var tokenPay = jsonElement.GetProperty("tokenPay").GetString() ?? "";
-                var eventType = jsonElement.GetProperty("event").GetString() ?? "";
+                // ✅ CORRECTION: Vérification des champs
+                var tokenPay = jsonElement.TryGetProperty("tokenPay", out var tokenProp)
+                    ? tokenProp.GetString() ?? ""
+                    : "";
+
+                var eventType = jsonElement.TryGetProperty("event", out var eventProp)
+                    ? eventProp.GetString() ?? ""
+                    : "";
+
                 var orderId = "";
+                var numeroSend = "";
+                var nomclient = "";
+                decimal montant = 0;
+                decimal frais = 0;
+                DateTime? createdAt = null;
+
+                // Extraire les champs optionnels
+                if (jsonElement.TryGetProperty("numeroSend", out var numeroSendProp))
+                    numeroSend = numeroSendProp.GetString() ?? "";
+
+                if (jsonElement.TryGetProperty("nomclient", out var nomclientProp))
+                    nomclient = nomclientProp.GetString() ?? "";
+
+                if (jsonElement.TryGetProperty("Montant", out var montantProp))
+                    decimal.TryParse(montantProp.GetString(), out montant);
+
+                if (jsonElement.TryGetProperty("frais", out var fraisProp))
+                    decimal.TryParse(fraisProp.GetString(), out frais);
+
+                if (jsonElement.TryGetProperty("createdAt", out var createdAtProp))
+                {
+                    if (createdAtProp.ValueKind == JsonValueKind.String)
+                        DateTime.TryParse(createdAtProp.GetString(), out var date);
+                }
 
                 // Extraire personal_Info
                 if (jsonElement.TryGetProperty("personal_Info", out var personalInfoArray) &&
                     personalInfoArray.GetArrayLength() > 0)
                 {
                     var firstItem = personalInfoArray[0];
-                    orderId = firstItem.TryGetProperty("orderId", out var orderIdProp)
-                        ? orderIdProp.GetString() ?? ""
-                        : "";
+                    if (firstItem.TryGetProperty("orderId", out var orderIdProp))
+                        orderId = orderIdProp.GetString() ?? "";
                 }
 
-                _logger.LogInformation("Processing webhook: Event={Event}, OrderId={OrderId}",
-                    eventType, orderId);
+                _logger.LogInformation("🔍 Processing webhook: Event={Event}, Token={Token}, OrderId={OrderId}",
+                    eventType, tokenPay, orderId);
 
                 // Créer objet webhook
                 var webhook = new FusionPayWebhookRequest
                 {
                     Event = eventType,
                     TokenPay = tokenPay,
-                    NumeroSend = jsonElement.GetProperty("numeroSend").GetString() ?? "",
-                    Nomclient = jsonElement.GetProperty("nomclient").GetString() ?? "",
-                    Montant = jsonElement.GetProperty("Montant").GetDecimal(),
-                    Frais = jsonElement.GetProperty("frais").GetDecimal(),
-                    CreatedAt = jsonElement.GetProperty("createdAt").GetDateTime()
+                    NumeroSend = numeroSend,
+                    Nomclient = nomclient,
+                    Montant = montant,
+                    Frais = frais,
+                    CreatedAt = createdAt ?? DateTime.UtcNow
                 };
 
                 if (!string.IsNullOrEmpty(orderId))
@@ -87,26 +115,31 @@ namespace FusionPayProxy.Controllers
 
                 if (processed && eventType == "payin.session.completed" && !string.IsNullOrEmpty(orderId))
                 {
-                    // 1. Mettre à jour Shopify
+                    // Mettre à jour Shopify
                     await _shopifyService.UpdateOrderStatusAsync(orderId, "paid");
+                    _logger.LogInformation("✅ Order {OrderId} marked as paid in Shopify", orderId);
 
-                    // 2. Déclencher WhatsApp
-                    await TriggerWhatsAppNotificationAsync(orderId);
-
-                    _logger.LogInformation("✅ Order {OrderId} marked as paid", orderId);
+                    // WhatsApp sera géré par n8n via Shopify webhook
                 }
 
                 return Ok(new
                 {
+                    success = true,
                     message = "Webhook processed successfully",
                     eventType = eventType,
-                    token = tokenPay
+                    token = tokenPay,
+                    orderId = orderId
                 });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "💥 Error processing webhook");
-                return StatusCode(500, new { error = "Internal server error" });
+                return StatusCode(500, new
+                {
+                    success = false,
+                    error = "Internal server error",
+                    message = ex.Message
+                });
             }
         }
 
@@ -116,40 +149,9 @@ namespace FusionPayProxy.Controllers
             return Ok(new
             {
                 message = "Webhook endpoint is working",
-                timestamp = DateTime.UtcNow
+                timestamp = DateTime.UtcNow,
+                url = "/api/webhook/fusionpay"
             });
-        }
-
-        private async Task TriggerWhatsAppNotificationAsync(string orderId)
-        {
-            try
-            {
-                var n8nUrl = _configuration["N8n:WebhookUrl"];
-                if (string.IsNullOrEmpty(n8nUrl))
-                {
-                    _logger.LogWarning("⚠️ N8n webhook URL not configured");
-                    return;
-                }
-
-                var payload = new
-                {
-                    eventType = "payment_completed",
-                    orderId = orderId,
-                    timestamp = DateTime.UtcNow
-                };
-
-                using var httpClient = new HttpClient();
-                var response = await httpClient.PostAsJsonAsync(n8nUrl, payload);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    _logger.LogInformation("📱 WhatsApp notification triggered for order {OrderId}", orderId);
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "💥 Error triggering WhatsApp notification");
-            }
         }
     }
 }

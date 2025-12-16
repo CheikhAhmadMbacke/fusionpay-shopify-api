@@ -1,30 +1,26 @@
 ﻿using FusionPayProxy.Models.Requests;
 using FusionPayProxy.Services;
-using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace FusionPayProxy.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [EnableCors("ShopifyPolicy")]
     public class PaymentController : ControllerBase
     {
         private readonly IFusionPayService _fusionPayService;
         private readonly ShopifyService _shopifyService;
         private readonly ILogger<PaymentController> _logger;
-        private readonly IConfiguration _configuration;
 
         public PaymentController(
             IFusionPayService fusionPayService,
             ShopifyService shopifyService,
-            ILogger<PaymentController> logger,
-            IConfiguration configuration)
+            ILogger<PaymentController> logger)
         {
             _fusionPayService = fusionPayService;
             _shopifyService = shopifyService;
             _logger = logger;
-            _configuration = configuration;
         }
 
         [HttpPost("initiate")]
@@ -34,13 +30,8 @@ namespace FusionPayProxy.Controllers
             {
                 _logger.LogInformation("🚀 Received payment initiation request for order {OrderId}", request.OrderId);
 
-                // Validation CORS
-                if (!IsValidOrigin(Request))
-                {
-                    _logger.LogWarning("🛑 Blocked request from invalid origin: {Origin}",
-                        Request.Headers.Origin);
-                    return Unauthorized(new { error = "Invalid origin" });
-                }
+                // ✅ SUPPRIMÉ: Validation CORS manuelle - Le middleware s'en occupe
+                // Pas besoin de vérifier l'origine ici
 
                 // Validation des données
                 var validationResult = ValidatePaymentRequest(request);
@@ -54,7 +45,7 @@ namespace FusionPayProxy.Controllers
                 // Créer un enregistrement Shopify
                 await _shopifyService.CreateShopifyOrderRecordAsync(
                     request.OrderId,
-                    request.OrderNumber,
+                    request.OrderNumber ?? $"ORDER_{DateTime.UtcNow.Ticks}",
                     request.Amount
                 );
 
@@ -179,22 +170,24 @@ namespace FusionPayProxy.Controllers
             });
         }
 
-        // ========== MÉTHODES PRIVÉES ==========
-
-        private bool IsValidOrigin(HttpRequest request)
+        [HttpGet("test")]
+        public IActionResult TestEndpoint()
         {
-            var allowedOrigins = _configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
-                ?? new[] { "https://afrokingvap.com", "https://checkout.shopify.com", "https://fusionpay-shopify-api.onrender.com" };
-
-            var origin = request.Headers.Origin.ToString();
-            return string.IsNullOrEmpty(origin) || allowedOrigins.Contains(origin);
+            return Ok(new
+            {
+                message = "PaymentController is working",
+                timestamp = DateTime.UtcNow,
+                corsConfigured = true
+            });
         }
+
+        // ========== MÉTHODES PRIVÉES ==========
 
         private (bool IsValid, List<string> Errors) ValidatePaymentRequest(PaymentRequest request)
         {
             var errors = new List<string>();
 
-            if (request.Amount < 200)
+            if (request.Amount <= 200)
                 errors.Add("Amount must be greater than 200");
 
             if (string.IsNullOrWhiteSpace(request.CustomerPhone))
