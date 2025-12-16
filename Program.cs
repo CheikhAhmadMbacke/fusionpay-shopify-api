@@ -1,7 +1,6 @@
 ﻿using FusionPayProxy.Data;
 using FusionPayProxy.Services;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
 
@@ -11,23 +10,22 @@ var builder = WebApplication.CreateBuilder(args);
 var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
 builder.WebHost.UseUrls($"http://*:{port}");
 
-// Ajoute ceci pour forcer le port 8080 sur Render si détecté
+// Forçage port 8080 sur Render
 if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("RENDER")))
 {
     builder.WebHost.UseUrls($"http://*:8080");
     Console.WriteLine($"🔧 Environnement Render détecté - Forçage port 8080");
 }
 
-// Add services to the container
+// Services
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.PropertyNamingPolicy = null;
         options.JsonSerializerOptions.WriteIndented = true;
-        options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
     });
 
-// Configuration Swagger complète
+// Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -35,240 +33,77 @@ builder.Services.AddSwaggerGen(c =>
     {
         Title = "FusionPay Proxy API",
         Version = "1.0",
-        Description = "API proxy for FusionPay payments integration with Shopify",
-        Contact = new OpenApiContact
-        {
-            Name = "AfroKingVap Support",
-            Email = "support@afrokingvap.com",
-            Url = new Uri("https://afrokingvap.com")
-        }
+        Description = "API proxy for FusionPay payments"
     });
-
-    // ⚠️ NOTE: Aucune authentification par header n'est requise pour l'API Pay-In FusionPay
-    // L'authentification se fait uniquement via l'URL de l'API fournie dans la configuration
-
-    // Inclure les commentaires XML si disponibles
-    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-    if (File.Exists(xmlPath))
-    {
-        c.IncludeXmlComments(xmlPath);
-    }
-
-    // Configuration pour les enums
-    c.UseAllOfToExtendReferenceSchemas();
 });
 
-// Configuration CORS
-var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()
-    ?? new[] { "https://afrokingvap.com", "https://checkout.shopify.com", "https://fusionpay-shopify-api.onrender.com" };
-
+// ⚠️ CORS FLEXIBLE POUR TESTS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowSpecificOrigins",
+    options.AddPolicy("AllowAll",
         policy => policy
-            .WithOrigins(allowedOrigins)
+            .AllowAnyOrigin()
             .AllowAnyMethod()
             .AllowAnyHeader()
             .AllowCredentials());
 });
 
-// Configure SQLite Database
+// Database
 var dbPath = builder.Configuration.GetConnectionString("DefaultConnection");
 Console.WriteLine($"📁 Chemin base de données: {dbPath}");
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite(dbPath)
-           .LogTo(Console.WriteLine, LogLevel.Information)
-           .EnableSensitiveDataLogging(builder.Environment.IsDevelopment()));
+    options.UseSqlite(dbPath));
 
-// Configure HttpClients
+// HttpClients
 builder.Services.AddHttpClient();
-builder.Services.AddHttpClient<FusionPayService>(client =>
-{
-    client.Timeout = TimeSpan.FromSeconds(30);
-    client.DefaultRequestHeaders.Add("User-Agent", "FusionPayProxy/1.0");
+builder.Services.AddHttpClient<FusionPayService>();
 
-    // ⚠️ IMPORTANT: Pas de header "moneyfusion-private-key" nécessaire pour l'API Pay-In FusionPay
-    // L'authentification se fait uniquement via l'URL de l'API
-});
-
-// Configure Settings
+// Settings
 builder.Services.Configure<FusionPaySettings>(builder.Configuration.GetSection("FusionPay"));
 builder.Services.Configure<ShopifySettings>(builder.Configuration.GetSection("Shopify"));
 
-// Register Services
+// Services
 builder.Services.AddScoped<IFusionPayService, FusionPayService>();
 builder.Services.AddScoped<ShopifyService>();
 
-// Détecter si on est en dev avec Ngrok
-if (builder.Environment.IsDevelopment())
-{
-    var ngrokUrl = builder.Configuration["FusionPay:YourApiBaseUrl"];
-    if (!string.IsNullOrEmpty(ngrokUrl) && ngrokUrl.Contains("ngrok"))
-    {
-        Console.WriteLine($"🚀 Ngrok détecté: {ngrokUrl}");
-        Console.WriteLine("📝 Webhooks seront envoyés à cette URL");
-    }
-}
-
 var app = builder.Build();
 
-// Apply database migrations
+// Migrations
 using (var scope = app.Services.CreateScope())
 {
     try
     {
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var pendingMigrations = await dbContext.Database.GetPendingMigrationsAsync();
-        if (pendingMigrations.Any())
-        {
-            Console.WriteLine($"📋 Migrations en attente: {string.Join(", ", pendingMigrations)}");
-            await dbContext.Database.MigrateAsync();
-            Console.WriteLine("✅ Base de données migrée avec succès");
-        }
-        else
-        {
-            Console.WriteLine("✅ Base de données à jour");
-        }
-
-        // Vérifier que la base est accessible
-        var canConnect = await dbContext.Database.CanConnectAsync();
-        if (canConnect)
-        {
-            Console.WriteLine("✅ Connexion à la base de données établie");
-        }
-        else
-        {
-            Console.WriteLine("❌ Impossible de se connecter à la base de données");
-        }
+        await dbContext.Database.MigrateAsync();
+        Console.WriteLine("✅ Base de données migrée avec succès");
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"❌ Échec de la migration de la base de données: {ex.Message}");
-        if (ex.InnerException != null)
-        {
-            Console.WriteLine($"   Détail: {ex.InnerException.Message}");
-        }
+        Console.WriteLine($"❌ Migration échouée: {ex.Message}");
     }
 }
 
-// Configure the HTTP request pipeline
-// ACTIVE SWAGGER MÊME EN PRODUCTION (mais avec protection)
+// ⚠️ TOUJOURS activer Swagger
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "FusionPay Proxy API v1");
-    c.RoutePrefix = "swagger"; // Accès via /swagger
-    c.DocumentTitle = "FusionPay Proxy API Documentation";
-
-    // Protection basique pour la production
-    if (!app.Environment.IsDevelopment())
-    {
-        c.DisplayRequestDuration();
-    }
+    c.RoutePrefix = "swagger";
 });
 
-// Redirection HTTPS seulement si on a un certificat valide
-if (!app.Environment.IsDevelopment())
-{
-    // Sur Render, la redirection HTTPS est gérée automatiquement
-    // Donc on peut désactiver UseHttpsRedirection si cela cause des problèmes
-    // app.UseHttpsRedirection();
-}
-
-// Configuration CORS
-app.UseCors("AllowSpecificOrigins");
+// ⚠️ CORS AVANT TOUT
+app.UseCors("AllowAll");
 
 app.UseAuthorization();
 app.MapControllers();
 
-// Health check endpoint amélioré
-app.MapGet("/", () =>
-{
-    return Results.Ok(new
-    {
-        message = "FusionPay Proxy API is running!",
-        version = "1.0",
-        environment = app.Environment.EnvironmentName,
-        timestamp = DateTime.UtcNow,
-        endpoints = new
-        {
-            health = "/health",
-            swagger = "/swagger",
-            paymentInitiate = "/api/payment/initiate",
-            webhook = "/api/webhook/fusionpay"
-        }
-    });
-});
+// Endpoints
+app.MapGet("/", () => "FusionPay Proxy API is running!");
+app.MapGet("/health", () => new { status = "healthy", timestamp = DateTime.UtcNow });
 
-app.MapGet("/health", () =>
-{
-    return Results.Json(new
-    {
-        status = "healthy",
-        timestamp = DateTime.UtcNow,
-        service = "FusionPay Proxy",
-        version = "1.0.0"
-    });
-});
-
-// Endpoint de diagnostic
-app.MapGet("/api/diagnostic", async (IConfiguration configuration, IOptions<ShopifySettings> shopifySettings) =>
-{
-    var shopifyToken = shopifySettings.Value.AccessToken;
-    var config = new
-    {
-        Environment = configuration["ASPNETCORE_ENVIRONMENT"],
-        Port = port,
-        ShopifyDomain = shopifySettings.Value.ShopDomain,
-        ShopifyTokenConfigured = !string.IsNullOrEmpty(shopifyToken),
-        ShopifyTokenLength = shopifyToken?.Length ?? 0,
-        FusionPayUrl = configuration["FusionPay:ApiUrl"],
-        DatabasePath = configuration.GetConnectionString("DefaultConnection"),
-        AllowedOrigins = configuration.GetSection("AllowedOrigins").Get<string[]>(),
-        RenderEnvironment = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("RENDER"))
-    };
-
-    return Results.Json(config);
-});
-
-// Endpoint pour tester Shopify
-app.MapPost("/api/shopify/test-connection", async (ShopifyService shopifyService) =>
-{
-    try
-    {
-        var result = await shopifyService.TestConnectionAsync();
-        return Results.Json(new
-        {
-            success = result,
-            message = result ? "Connexion Shopify réussie" : "Connexion Shopify échouée",
-            timestamp = DateTime.UtcNow
-        });
-    }
-    catch (Exception ex)
-    {
-        return Results.Json(new
-        {
-            success = false,
-            message = $"Erreur: {ex.Message}",
-            timestamp = DateTime.UtcNow
-        }, statusCode: 500);
-    }
-});
-
-Console.WriteLine($"\n🚀 FusionPay Proxy API démarre sur .NET 8...");
-Console.WriteLine($"📊 Base de données: SQLite");
-Console.WriteLine($"🔗 CORS Origins: {string.Join(", ", allowedOrigins)}");
-Console.WriteLine($"🌐 Environnement: {app.Environment.EnvironmentName}");
-Console.WriteLine($"🔧 Port: {port}");
-Console.WriteLine($"📁 Chemin DB: {dbPath}");
-Console.WriteLine($"⚠️  IMPORTANT: API Pay-In FusionPay - Aucune ApiKey requise");
-Console.WriteLine($"   L'authentification se fait uniquement via l'URL de l'API");
-Console.WriteLine($"\n✅ Prêt! Accédez aux endpoints:");
-Console.WriteLine($"   - API: https://fusionpay-shopify-api.onrender.com");
-Console.WriteLine($"   - Swagger: https://fusionpay-shopify-api.onrender.com/swagger");
-Console.WriteLine($"   - Health: https://fusionpay-shopify-api.onrender.com/health");
-Console.WriteLine($"   - Diagnostic: https://fusionpay-shopify-api.onrender.com/api/diagnostic");
+Console.WriteLine($"🚀 API démarrée sur le port {port}");
+Console.WriteLine($"🔗 CORS: Autorise toutes les origines (mode test)");
+Console.WriteLine($"🌐 Swagger: https://fusionpay-shopify-api.onrender.com/swagger");
 
 app.Run();
