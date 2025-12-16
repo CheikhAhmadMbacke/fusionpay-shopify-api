@@ -184,7 +184,7 @@ namespace FusionPayProxy.Controllers
         private bool IsValidOrigin(HttpRequest request)
         {
             var allowedOrigins = _configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
-                ?? new[] { "https://afrokingvap.com", "https://checkout.shopify.com" };
+                ?? new[] { "https://afrokingvap.com", "https://checkout.shopify.com", "https://fusionpay-shopify-api.onrender.com" };
 
             var origin = request.Headers.Origin.ToString();
             return string.IsNullOrEmpty(origin) || allowedOrigins.Contains(origin);
@@ -194,7 +194,7 @@ namespace FusionPayProxy.Controllers
         {
             var errors = new List<string>();
 
-            if (request.Amount <= 200)
+            if (request.Amount < 200)
                 errors.Add("Amount must be greater than 200");
 
             if (string.IsNullOrWhiteSpace(request.CustomerPhone))
