@@ -44,32 +44,8 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 
-    // Configuration de l'authentification par header API Key
-    c.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
-    {
-        Description = "API Key nécessaire pour les endpoints de paiement. Utilisez 'moneyfusion-private-key' dans le header.",
-        Type = SecuritySchemeType.ApiKey,
-        Name = "moneyfusion-private-key",
-        In = ParameterLocation.Header,
-        Scheme = "ApiKeyScheme"
-    });
-
-    var securityScheme = new OpenApiSecurityScheme
-    {
-        Reference = new OpenApiReference
-        {
-            Type = ReferenceType.SecurityScheme,
-            Id = "ApiKey"
-        },
-        In = ParameterLocation.Header
-    };
-
-    var securityRequirement = new OpenApiSecurityRequirement
-    {
-        { securityScheme, new List<string>() }
-    };
-
-    c.AddSecurityRequirement(securityRequirement);
+    // ⚠️ NOTE: Aucune authentification par header n'est requise pour l'API Pay-In FusionPay
+    // L'authentification se fait uniquement via l'URL de l'API fournie dans la configuration
 
     // Inclure les commentaires XML si disponibles
     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
@@ -83,7 +59,7 @@ builder.Services.AddSwaggerGen(c =>
     c.UseAllOfToExtendReferenceSchemas();
 });
 
-// Configuration CORS (CORRIGÉ - ShopifyPolicy n'existe pas)
+// Configuration CORS
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()
     ?? new[] { "https://afrokingvap.com", "https://checkout.shopify.com" };
 
@@ -112,6 +88,9 @@ builder.Services.AddHttpClient<FusionPayService>(client =>
 {
     client.Timeout = TimeSpan.FromSeconds(30);
     client.DefaultRequestHeaders.Add("User-Agent", "FusionPayProxy/1.0");
+
+    // ⚠️ IMPORTANT: Pas de header "moneyfusion-private-key" nécessaire pour l'API Pay-In FusionPay
+    // L'authentification se fait uniquement via l'URL de l'API
 });
 
 // Configure Settings
@@ -198,7 +177,7 @@ if (!app.Environment.IsDevelopment())
     // app.UseHttpsRedirection();
 }
 
-// Configuration CORS (CORRIGÉ - utilise le bon nom de politique)
+// Configuration CORS
 app.UseCors("AllowSpecificOrigins");
 
 app.UseAuthorization();
@@ -245,8 +224,7 @@ app.MapGet("/api/diagnostic", async (IConfiguration configuration, IOptions<Shop
         ShopifyDomain = shopifySettings.Value.ShopDomain,
         ShopifyTokenConfigured = !string.IsNullOrEmpty(shopifyToken),
         ShopifyTokenLength = shopifyToken?.Length ?? 0,
-        FusionPayUrl = configuration["FusionPay:ApiBaseUrl"],
-        FusionPayKeyConfigured = !string.IsNullOrEmpty(configuration["FusionPay:ApiKey"]),
+        FusionPayUrl = configuration["FusionPay:ApiUrl"],
         DatabasePath = configuration.GetConnectionString("DefaultConnection"),
         AllowedOrigins = configuration.GetSection("AllowedOrigins").Get<string[]>(),
         RenderEnvironment = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("RENDER"))
@@ -285,6 +263,8 @@ Console.WriteLine($"🔗 CORS Origins: {string.Join(", ", allowedOrigins)}");
 Console.WriteLine($"🌐 Environnement: {app.Environment.EnvironmentName}");
 Console.WriteLine($"🔧 Port: {port}");
 Console.WriteLine($"📁 Chemin DB: {dbPath}");
+Console.WriteLine($"⚠️  IMPORTANT: API Pay-In FusionPay - Aucune ApiKey requise");
+Console.WriteLine($"   L'authentification se fait uniquement via l'URL de l'API");
 Console.WriteLine($"\n✅ Prêt! Accédez aux endpoints:");
 Console.WriteLine($"   - API: https://fusionpay-shopify-api.onrender.com");
 Console.WriteLine($"   - Swagger: https://fusionpay-shopify-api.onrender.com/swagger");

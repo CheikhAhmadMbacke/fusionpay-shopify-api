@@ -37,10 +37,12 @@ namespace FusionPayProxy.Services
         private void ConfigureHttpClient()
         {
             _httpClient.DefaultRequestHeaders.Clear();
-            _httpClient.DefaultRequestHeaders.Add(
-                "moneyfusion-private-key",
-                _settings.ApiKey
-            );
+            // SUPPRIME ces 2 lignes :
+            // _httpClient.DefaultRequestHeaders.Add(
+            //     "moneyfusion-private-key",
+            //     _settings.ApiKey
+            // );
+
             _httpClient.DefaultRequestHeaders.Accept.Add(
                 new MediaTypeWithQualityHeaderValue("application/json")
             );
@@ -351,7 +353,6 @@ namespace FusionPayProxy.Services
     public class FusionPaySettings
     {
         public string ApiUrl { get; set; } = string.Empty;
-        public string ApiKey { get; set; } = string.Empty;
         public string YourApiBaseUrl { get; set; } = string.Empty;
     }
 }
