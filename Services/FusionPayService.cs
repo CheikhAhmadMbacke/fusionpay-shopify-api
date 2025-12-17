@@ -90,7 +90,7 @@ namespace FusionPayProxy.Services
                     numeroSend = FormatPhoneNumber(request.CustomerPhone),
                     nomclient = request.CustomerName,
 
-                    personal_Info = new[]
+                    personal_info = new[]
                     {
                         new
                         {
@@ -108,7 +108,7 @@ namespace FusionPayProxy.Services
 
                 // 3. Appeler l'API FusionPay
                 var content = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
-                var response = await _httpClient.PostAsync("pay", content);
+                var response = await _httpClient.PostAsync("", content);
 
                 var responseContent = await response.Content.ReadAsStringAsync();
                 _logger.LogDebug("📥 FusionPay response: {Response}", responseContent);
