@@ -260,16 +260,36 @@ namespace FusionPayProxy.Services
         {
             try
             {
-                string verifyUrl = $"paiementNotif/{token}";
-                _logger.LogDebug("🔍 Verifying payment status for token: {Token}", token);
+                // ❌ Problème : Vous utilisez "paiementNotif" mais la doc dit autre chose
 
-                var response = await _httpClient.GetAsync(verifyUrl);
+                // ✅ CORRECTION : Selon la doc FusionPay, l'URL est :
+                string verifyUrl = $"https://www.pay.moneyfusion.net/paiementNotif/{token}";
+                _logger.LogDebug("🔍 Verifying payment status at: {Url}", verifyUrl);
+
+                // NE PAS utiliser _httpClient.BaseAddress car c'est pour l'API Pay-In
+                var httpClient = new HttpClient();
+                var response = await httpClient.GetAsync(verifyUrl);
 
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadAsStringAsync();
                     _logger.LogDebug("📊 Payment status response: {Content}", content);
-                    return "verified";
+
+                    // Analyser la réponse pour obtenir le vrai statut
+                    var responseData = JsonSerializer.Deserialize<JsonElement>(content);
+
+                    if (responseData.TryGetProperty("statut", out var statusElement) &&
+                        statusElement.GetBoolean())
+                    {
+                        if (responseData.TryGetProperty("data", out var dataElement))
+                        {
+                            if (dataElement.TryGetProperty("statut", out var paymentStatus))
+                            {
+                                return paymentStatus.GetString() ?? "unknown";
+                            }
+                        }
+                    }
+                    return "pending";
                 }
 
                 return "error";

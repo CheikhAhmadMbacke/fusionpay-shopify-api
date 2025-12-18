@@ -1,7 +1,8 @@
-﻿using System.Text.Json;
-using FusionPayProxy.Models.Requests;
+﻿using FusionPayProxy.Models.Requests;
 using FusionPayProxy.Services;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace FusionPayProxy.Controllers
 {
@@ -30,116 +31,37 @@ namespace FusionPayProxy.Controllers
             {
                 _logger.LogInformation("📨 Received FusionPay webhook request");
 
-                using var reader = new StreamReader(Request.Body);
-                var body = await reader.ReadToEndAsync();
+                // Lire le JSON
+                var json = await new StreamReader(Request.Body).ReadToEndAsync();
+                _logger.LogDebug("📥 Webhook payload: {Json}", json);
 
-                if (string.IsNullOrEmpty(body))
+                // Désérialiser avec options flexibles
+                var options = new JsonSerializerOptions
                 {
-                    _logger.LogWarning("🛑 Empty webhook body received");
-                    return BadRequest(new { error = "Empty body" });
-                }
-
-                _logger.LogDebug("📝 Webhook body: {Body}", body);
-
-                var jsonElement = JsonSerializer.Deserialize<JsonElement>(body);
-
-                // ✅ CORRECTION: Vérification des champs
-                var tokenPay = jsonElement.TryGetProperty("tokenPay", out var tokenProp)
-                    ? tokenProp.GetString() ?? ""
-                    : "";
-
-                var eventType = jsonElement.TryGetProperty("event", out var eventProp)
-                    ? eventProp.GetString() ?? ""
-                    : "";
-
-                var orderId = "";
-                var numeroSend = "";
-                var nomclient = "";
-                decimal montant = 0;
-                decimal frais = 0;
-                DateTime? createdAt = null;
-
-                // Extraire les champs optionnels
-                if (jsonElement.TryGetProperty("numeroSend", out var numeroSendProp))
-                    numeroSend = numeroSendProp.GetString() ?? "";
-
-                if (jsonElement.TryGetProperty("nomclient", out var nomclientProp))
-                    nomclient = nomclientProp.GetString() ?? "";
-
-                if (jsonElement.TryGetProperty("Montant", out var montantProp))
-                    decimal.TryParse(montantProp.GetString(), out montant);
-
-                if (jsonElement.TryGetProperty("frais", out var fraisProp))
-                    decimal.TryParse(fraisProp.GetString(), out frais);
-
-                if (jsonElement.TryGetProperty("createdAt", out var createdAtProp))
-                {
-                    if (createdAtProp.ValueKind == JsonValueKind.String)
-                        DateTime.TryParse(createdAtProp.GetString(), out var date);
-                }
-
-                // Extraire personal_Info
-                if (jsonElement.TryGetProperty("personal_Info", out var personalInfoArray) &&
-                    personalInfoArray.GetArrayLength() > 0)
-                {
-                    var firstItem = personalInfoArray[0];
-                    if (firstItem.TryGetProperty("orderId", out var orderIdProp))
-                        orderId = orderIdProp.GetString() ?? "";
-                }
-
-                _logger.LogInformation("🔍 Processing webhook: Event={Event}, Token={Token}, OrderId={OrderId}",
-                    eventType, tokenPay, orderId);
-
-                // Créer objet webhook
-                var webhook = new FusionPayWebhookRequest
-                {
-                    Event = eventType,
-                    TokenPay = tokenPay,
-                    NumeroSend = numeroSend,
-                    Nomclient = nomclient,
-                    Montant = montant,
-                    Frais = frais,
-                    CreatedAt = createdAt ?? DateTime.UtcNow
+                    PropertyNameCaseInsensitive = true,
+                    NumberHandling = JsonNumberHandling.AllowReadingFromString // Important !
                 };
 
-                if (!string.IsNullOrEmpty(orderId))
+                var webhookData = JsonSerializer.Deserialize<FusionPayWebhookRequest>(json, options);
+
+                if (webhookData == null)
                 {
-                    webhook.Personal_Info = new List<PersonalInfo>
-                    {
-                        new PersonalInfo { OrderId = orderId }
-                    };
+                    _logger.LogError("❌ Failed to deserialize webhook");
+                    return BadRequest("Invalid webhook data");
                 }
 
-                // Traiter le webhook
-                var processed = await _fusionPayService.HandleWebhookAsync(webhook);
+                // Gérer le token (string ou number)
+                string tokenPay = webhookData.TokenPay;
 
-                if (processed && eventType == "payin.session.completed" && !string.IsNullOrEmpty(orderId))
-                {
-                    // Mettre à jour Shopify
-                    await _shopifyService.UpdateOrderStatusAsync(orderId, "paid");
-                    _logger.LogInformation("✅ Order {OrderId} marked as paid in Shopify", orderId);
+                // Appeler le service
+                var result = await _fusionPayService.HandleWebhookAsync(webhookData);
 
-                    // WhatsApp sera géré par n8n via Shopify webhook
-                }
-
-                return Ok(new
-                {
-                    success = true,
-                    message = "Webhook processed successfully",
-                    eventType = eventType,
-                    token = tokenPay,
-                    orderId = orderId
-                });
+                return result ? Ok() : StatusCode(500);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "💥 Error processing webhook");
-                return StatusCode(500, new
-                {
-                    success = false,
-                    error = "Internal server error",
-                    message = ex.Message
-                });
+                return StatusCode(500);
             }
         }
 
