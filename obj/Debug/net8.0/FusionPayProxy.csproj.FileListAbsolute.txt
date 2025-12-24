@@ -128,3 +128,4 @@ C:\FusionPayProxy\FusionPayProxy\obj\Debug\net8.0\refint\FusionPayProxy.dll
 C:\FusionPayProxy\FusionPayProxy\obj\Debug\net8.0\FusionPayProxy.pdb
 C:\FusionPayProxy\FusionPayProxy\obj\Debug\net8.0\FusionPayProxy.genruntimeconfig.cache
 C:\FusionPayProxy\FusionPayProxy\obj\Debug\net8.0\ref\FusionPayProxy.dll
+C:\FusionPayProxy\FusionPayProxy\obj\Debug\net8.0\FusionPayProxy.sourcelink.json

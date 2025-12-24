@@ -47,6 +47,8 @@ namespace FusionPayProxy.Models
 
         [MaxLength(500)]
         public string? ErrorMessage { get; set; }
+        public string? CustomerEmail { get; set; }
+        public string? ReturnUrl { get; set; }
 
         public bool IsProcessed { get; set; } = false;
 

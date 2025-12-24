@@ -1,7 +1,7 @@
 [
   {
     "ContainingType": "Program\u002B\u003C\u003Ec",
-    "Method": "\u003C\u003CMain\u003E$\u003Eb__0_5",
+    "Method": "\u003C\u003CMain\u003E$\u003Eb__0_4",
     "RelativePath": "",
     "HttpMethod": "GET",
     "IsController": false,
@@ -9,10 +9,24 @@
     "Parameters": [],
     "ReturnTypes": [
       {
-        "Type": "System.String",
-        "MediaTypes": [
-          "text/plain"
-        ],
+        "Type": "System.Void",
+        "MediaTypes": [],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "Program\u002B\u003C\u003Ec__DisplayClass0_0",
+    "Method": "\u003C\u003CMain\u003E$\u003Eb__6",
+    "RelativePath": "about",
+    "HttpMethod": "GET",
+    "IsController": false,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "System.Void",
+        "MediaTypes": [],
         "StatusCode": 200
       }
     ]
@@ -41,6 +55,16 @@
         "IsRequired": true
       }
     ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FusionPayProxy.Controllers.PaymentController",
+    "Method": "TestEndpoint",
+    "RelativePath": "api/Payment/test",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
     "ReturnTypes": []
   },
   {
@@ -90,8 +114,8 @@
     "ReturnTypes": []
   },
   {
-    "ContainingType": "Program\u002B\u003C\u003Ec",
-    "Method": "\u003C\u003CMain\u003E$\u003Eb__0_6",
+    "ContainingType": "Program\u002B\u003C\u003Ec__DisplayClass0_0",
+    "Method": "\u003C\u003CMain\u003E$\u003Eb__7",
     "RelativePath": "health",
     "HttpMethod": "GET",
     "IsController": false,
@@ -99,10 +123,24 @@
     "Parameters": [],
     "ReturnTypes": [
       {
-        "Type": "\u003C\u003Ef__AnonymousType16\u00602[[System.String, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.DateTime, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
-        "MediaTypes": [
-          "application/json"
-        ],
+        "Type": "System.Void",
+        "MediaTypes": [],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "Program\u002B\u003C\u003Ec",
+    "Method": "\u003C\u003CMain\u003E$\u003Eb__0_5",
+    "RelativePath": "thank-you",
+    "HttpMethod": "GET",
+    "IsController": false,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "System.Void",
+        "MediaTypes": [],
         "StatusCode": 200
       }
     ]

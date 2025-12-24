@@ -1,8 +1,7 @@
 {
   "openapi": "3.0.1",
   "info": {
-    "title": "FusionPay Proxy API",
-    "description": "API proxy for FusionPay payments integration with Shopify",
+    "title": "FusionPayProxy",
     "version": "1.0"
   },
   "paths": {
@@ -13,14 +12,31 @@
         ],
         "responses": {
           "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/thank-you": {
+      "get": {
+        "tags": [
+          "FusionPayProxy"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/about": {
+      "get": {
+        "tags": [
+          "FusionPayProxy"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
           }
         }
       }
@@ -32,14 +48,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StringDateTime<>f__AnonymousType16"
-                }
-              }
-            }
+            "description": "Success"
           }
         }
       }
@@ -122,6 +131,18 @@
         }
       }
     },
+    "/api/Payment/test": {
+      "get": {
+        "tags": [
+          "Payment"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
     "/api/Webhook/fusionpay": {
       "post": {
         "tags": [
@@ -149,86 +170,72 @@
   },
   "components": {
     "schemas": {
-      "OrderItem": {
-        "type": "object",
-        "properties": {
-          "Name": {
-            "type": "string",
-            "nullable": true
-          },
-          "Price": {
-            "type": "number",
-            "format": "double"
-          },
-          "Quantity": {
-            "type": "integer",
-            "format": "int32"
-          }
-        },
-        "additionalProperties": false
-      },
       "PaymentRequest": {
         "required": [
-          "Amount",
-          "CustomerName",
-          "CustomerPhone",
-          "OrderId",
-          "ReturnUrl"
+          "amount",
+          "customerName",
+          "customerPhone",
+          "orderId"
         ],
         "type": "object",
         "properties": {
-          "Amount": {
-            "maximum": 10000000,
-            "minimum": 1,
-            "type": "number",
-            "format": "double"
+          "orderId": {
+            "maxLength": 50,
+            "minLength": 3,
+            "type": "string"
           },
-          "CustomerPhone": {
+          "orderNumber": {
+            "maxLength": 20,
+            "minLength": 0,
+            "type": "string",
+            "nullable": true
+          },
+          "customerPhone": {
             "minLength": 1,
+            "pattern": "^[0-9]{8,15}$",
             "type": "string",
             "format": "tel"
           },
-          "CustomerName": {
+          "customerName": {
+            "maxLength": 100,
             "minLength": 2,
             "type": "string"
           },
-          "OrderId": {
-            "minLength": 1,
-            "type": "string"
+          "amount": {
+            "maximum": 1000000,
+            "minimum": 201,
+            "type": "number",
+            "format": "double"
           },
-          "OrderNumber": {
+          "customerEmail": {
             "type": "string",
+            "format": "email",
             "nullable": true
           },
-          "ReturnUrl": {
-            "minLength": 1,
-            "type": "string",
-            "format": "uri"
-          },
-          "ProductName": {
-            "type": "string",
-            "nullable": true
-          },
-          "Items": {
+          "articles": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/OrderItem"
+              "$ref": "#/components/schemas/ShopifyArticle"
             },
             "nullable": true
           }
         },
         "additionalProperties": false
       },
-      "StringDateTime<>f__AnonymousType16": {
+      "ShopifyArticle": {
         "type": "object",
         "properties": {
-          "status": {
+          "name": {
             "type": "string",
             "nullable": true
           },
-          "timestamp": {
-            "type": "string",
-            "format": "date-time"
+          "price": {
+            "type": "number",
+            "format": "double"
+          },
+          "quantity": {
+            "type": "integer",
+            "format": "int32"
           }
         },
         "additionalProperties": false

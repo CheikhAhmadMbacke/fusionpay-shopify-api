@@ -1,0 +1,372 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paiement Réussi - AfroKingVap</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .success-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: bounce 1s ease infinite alternate;
+        }
+
+        @keyframes bounce {
+            from {
+                transform: translateY(0);
+            }
+
+            to {
+                transform: translateY(-10px);
+            }
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+
+        .content {
+            padding: 40px 30px;
+        }
+
+        .order-info {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border-left: 4px solid #667eea;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+            .info-row:last-child {
+                border-bottom: none;
+                margin-bottom: 0;
+                padding-bottom: 0;
+            }
+
+        .label {
+            color: #6c757d;
+            font-weight: 500;
+        }
+
+        .value {
+            color: #212529;
+            font-weight: 600;
+        }
+
+        .actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+            .btn-primary:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+            }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #495057;
+            border: 2px solid #e9ecef;
+        }
+
+            .btn-secondary:hover {
+                background: #e9ecef;
+                transform: translateY(-2px);
+            }
+
+        .timer {
+            text-align: center;
+            color: #6c757d;
+            margin-top: 25px;
+            font-size: 14px;
+        }
+
+            .timer span {
+                font-weight: 600;
+                color: #667eea;
+            }
+
+        .whatsapp-notice {
+            background: #25D366;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 25px;
+            text-align: center;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.02);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .whatsapp-icon {
+            font-size: 24px;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            border-top: 1px solid #e9ecef;
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                border-radius: 15px;
+            }
+
+            .header {
+                padding: 30px 20px;
+            }
+
+            .content {
+                padding: 30px 20px;
+            }
+
+            .actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="success-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h1>Paiement Réussi !</h1>
+            <p>Merci pour votre commande chez AfroKingVap</p>
+        </div>
+
+        <div class="content">
+            <div class="order-info">
+                <div class="info-row">
+                    <span class="label">N° de Commande :</span>
+                    <span id="orderId" class="value">Chargement...</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Montant :</span>
+                    <span id="amount" class="value">Chargement...</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Statut :</span>
+                    <span id="status" class="value" style="color: #28a745;">Payé</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Date :</span>
+                    <span id="date" class="value">Chargement...</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Référence :</span>
+                    <span id="reference" class="value">Chargement...</span>
+                </div>
+            </div>
+
+            <div class="whatsapp-notice">
+                <i class="fab fa-whatsapp whatsapp-icon"></i>
+                Vous recevrez une confirmation WhatsApp dans quelques instants
+            </div>
+
+            <div class="actions">
+                <a href="https://afrokingvap.com" class="btn btn-primary">
+                    <i class="fas fa-home"></i>
+                    Retour à la boutique
+                </a>
+                <a href="https://afrokingvap.com/orders" class="btn btn-secondary">
+                    <i class="fas fa-shopping-bag"></i>
+                    Voir mes commandes
+                </a>
+            </div>
+
+            <div class="timer">
+                Redirection vers la boutique dans <span id="countdown">10</span> secondes...
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Besoin d'aide ? Contactez-nous au <strong>+221 77 123 45 67</strong></p>
+            <p>© 2024 AfroKingVap. Tous droits réservés.</p>
+        </div>
+    </div>
+
+    <script>
+        // Récupérer les paramètres de l'URL
+        function getQueryParam(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
+        // Afficher les informations de la commande
+        function displayOrderInfo() {
+            const orderId = getQueryParam('orderId') || 'N/A';
+            const amount = getQueryParam('amount') || '0';
+            const token = getQueryParam('token') || '';
+            const status = getQueryParam('status') || 'paid';
+
+            // Formater le montant
+            const formattedAmount = new Intl.NumberFormat('fr-FR', {
+                style: 'currency',
+                currency: 'XOF'
+            }).format(parseFloat(amount));
+
+            // Mettre à jour les éléments
+            document.getElementById('orderId').textContent = orderId;
+            document.getElementById('amount').textContent = formattedAmount;
+            document.getElementById('date').textContent = new Date().toLocaleDateString('fr-FR');
+            document.getElementById('reference').textContent = token.substring(0, 12) + '...';
+
+            // Mettre à jour le statut avec couleur
+            const statusElement = document.getElementById('status');
+            if (status === 'paid') {
+                statusElement.textContent = 'Payé';
+                statusElement.style.color = '#28a745';
+            } else if (status === 'pending') {
+                statusElement.textContent = 'En attente';
+                statusElement.style.color = '#ffc107';
+            }
+        }
+
+        // Compte à rebours pour la redirection
+        function startCountdown() {
+            let seconds = 10;
+            const countdownElement = document.getElementById('countdown');
+
+            const interval = setInterval(() => {
+                seconds--;
+                countdownElement.textContent = seconds;
+
+                if (seconds <= 0) {
+                    clearInterval(interval);
+                    window.location.href = 'https://afrokingvap.com';
+                }
+            }, 1000);
+        }
+
+        // Vérifier le statut du paiement via l'API
+        async function checkPaymentStatus(token) {
+            if (!token) return;
+
+            try {
+                const response = await fetch(`https://fusionpay-shopify-api.onrender.com/api/payment/verify/${token}`);
+                const data = await response.json();
+
+                if (data.status === 'paid') {
+                    // Paiement confirmé
+                    console.log('Paiement confirmé par API');
+                } else if (data.status === 'pending') {
+                    // Paiement en attente
+                    document.getElementById('status').textContent = 'En attente de confirmation';
+                    document.getElementById('status').style.color = '#ffc107';
+                }
+            } catch (error) {
+                console.error('Erreur vérification paiement:', error);
+            }
+        }
+
+        // Initialiser la page
+        document.addEventListener('DOMContentLoaded', () => {
+            displayOrderInfo();
+            startCountdown();
+
+            // Vérifier le statut via l'API
+            const token = getQueryParam('token');
+            if (token) {
+                // Vérifier immédiatement
+                checkPaymentStatus(token);
+
+                // Vérifier à nouveau après 5 secondes
+                setTimeout(() => checkPaymentStatus(token), 5000);
+            }
+
+            // Log analytics
+            console.log('Thank you page loaded');
+        });
+    </script>
+</body>
+</html>

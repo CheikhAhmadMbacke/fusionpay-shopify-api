@@ -30,23 +30,28 @@ namespace FusionPayProxy.Controllers
             {
                 _logger.LogInformation("🚀 Received payment initiation request for order {OrderId}", request.OrderId);
 
-                // ✅ SUPPRIMÉ: Validation CORS manuelle - Le middleware s'en occupe
-                // Pas besoin de vérifier l'origine ici
-
                 // Validation des données
                 var validationResult = ValidatePaymentRequest(request);
                 if (!validationResult.IsValid)
                 {
                     _logger.LogWarning("🛑 Invalid payment request: {Errors}",
                         string.Join(", ", validationResult.Errors));
-                    return BadRequest(new { errors = validationResult.Errors });
+                    return BadRequest(new
+                    {
+                        success = false,
+                        errors = validationResult.Errors,
+                        message = "Validation failed"
+                    });
                 }
 
                 // Créer un enregistrement Shopify
                 await _shopifyService.CreateShopifyOrderRecordAsync(
                     request.OrderId,
                     request.OrderNumber ?? $"ORDER_{DateTime.UtcNow.Ticks}",
-                    request.Amount
+                    request.Amount,
+                    request.CustomerName,
+                    request.CustomerPhone,
+                    request.CustomerEmail
                 );
 
                 // Initier le paiement FusionPay
@@ -61,20 +66,42 @@ namespace FusionPayProxy.Controllers
                     {
                         success = true,
                         paymentUrl = result.PaymentUrl,
+                        returnUrl = result.ReturnUrl,
                         token = result.Token,
                         transactionId = result.TransactionId,
-                        message = result.Message
+                        orderId = result.OrderId,
+                        message = result.Message,
+                        expiresAt = result.ExpiresAt
                     });
                 }
                 else
                 {
                     _logger.LogError("❌ Payment initiation failed: {Error}", result.ErrorMessage);
-                    return BadRequest(new
+
+                    // ✅ CORRECTION : Créer un objet dynamique unique
+                    object response;
+
+                    if (result.ValidationErrors != null && result.ValidationErrors.Any())
                     {
-                        success = false,
-                        error = result.ErrorMessage,
-                        message = "Échec de l'initiation du paiement"
-                    });
+                        response = new
+                        {
+                            success = false,
+                            error = result.ErrorMessage,
+                            message = "Échec de l'initiation du paiement",
+                            validationErrors = result.ValidationErrors
+                        };
+                    }
+                    else
+                    {
+                        response = new
+                        {
+                            success = false,
+                            error = result.ErrorMessage,
+                            message = "Échec de l'initiation du paiement"
+                        };
+                    }
+
+                    return BadRequest(response);
                 }
             }
             catch (Exception ex)
@@ -101,15 +128,20 @@ namespace FusionPayProxy.Controllers
 
                 return Ok(new
                 {
+                    success = true,
                     token = token,
                     status = status,
                     transaction = transaction != null ? new
                     {
                         id = transaction.Id,
                         orderId = transaction.ShopifyOrderId,
+                        orderNumber = transaction.ShopifyOrderNumber,
                         amount = transaction.Amount,
                         customerPhone = transaction.CustomerPhone,
-                        createdAt = transaction.CreatedAt
+                        customerName = transaction.CustomerName,
+                        status = transaction.Status,
+                        createdAt = transaction.CreatedAt,
+                        paidAt = transaction.PaidAt
                     } : null,
                     timestamp = DateTime.UtcNow
                 });
@@ -117,7 +149,12 @@ namespace FusionPayProxy.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "💥 Error verifying payment");
-                return StatusCode(500, new { error = ex.Message });
+                return StatusCode(500, new
+                {
+                    success = false,
+                    error = ex.Message,
+                    message = "Error verifying payment"
+                });
             }
         }
 
@@ -129,16 +166,20 @@ namespace FusionPayProxy.Controllers
                 var transactions = await _fusionPayService.GetPendingTransactionsAsync();
                 return Ok(new
                 {
+                    success = true,
                     count = transactions.Count,
                     transactions = transactions.Select(t => new
                     {
                         id = t.Id,
                         orderId = t.ShopifyOrderId,
+                        orderNumber = t.ShopifyOrderNumber,
                         token = t.FusionPayToken,
                         amount = t.Amount,
                         status = t.Status,
+                        customerName = t.CustomerName,
+                        customerPhone = t.CustomerPhone,
                         createdAt = t.CreatedAt,
-                        customerPhone = t.CustomerPhone
+                        updatedAt = t.UpdatedAt
                     }),
                     timestamp = DateTime.UtcNow
                 });
@@ -146,7 +187,12 @@ namespace FusionPayProxy.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "💥 Error getting pending transactions");
-                return StatusCode(500, new { error = ex.Message });
+                return StatusCode(500, new
+                {
+                    success = false,
+                    error = ex.Message,
+                    message = "Error getting pending transactions"
+                });
             }
         }
 
@@ -175,9 +221,11 @@ namespace FusionPayProxy.Controllers
         {
             return Ok(new
             {
+                success = true,
                 message = "PaymentController is working",
                 timestamp = DateTime.UtcNow,
-                corsConfigured = true
+                corsConfigured = true,
+                apiVersion = "1.0.0"
             });
         }
 
@@ -188,21 +236,18 @@ namespace FusionPayProxy.Controllers
             var errors = new List<string>();
 
             if (request.Amount <= 200)
-                errors.Add("Amount must be greater than 200");
+                errors.Add("Le montant doit être supérieur à 200 FCFA");
 
             if (string.IsNullOrWhiteSpace(request.CustomerPhone))
-                errors.Add("Customer phone is required");
+                errors.Add("Le numéro de téléphone du client est requis");
             else if (request.CustomerPhone.Length < 8)
-                errors.Add("Phone number must be at least 8 digits");
+                errors.Add("Le numéro de téléphone doit contenir au moins 8 chiffres");
 
             if (string.IsNullOrWhiteSpace(request.CustomerName))
-                errors.Add("Customer name is required");
+                errors.Add("Le nom du client est requis");
 
             if (string.IsNullOrWhiteSpace(request.OrderId))
-                errors.Add("Order ID is required");
-
-            if (string.IsNullOrWhiteSpace(request.ReturnUrl))
-                errors.Add("Return URL is required");
+                errors.Add("L'ID de commande est requis");
 
             return (!errors.Any(), errors);
         }
