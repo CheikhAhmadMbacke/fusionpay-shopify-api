@@ -454,60 +454,102 @@ function restoreStyles(originalStyles) {
 }
         // Télécharger le reçu en PDF
 function downloadReceipt() {
-    const element = document.getElementById('receipt');
     const params = getUrlParams();
     
-    // OPTIMISER LES STYLES POUR LE PDF
-    const originalStyles = optimizeForPDF();
+    // Créer une copie simplifiée du reçu uniquement pour le PDF
+    const pdfContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body { margin: 0; padding: 10px; font-family: Arial, sans-serif; }
+                .header { text-align: center; margin-bottom: 20px; }
+                .logo { font-size: 24px; font-weight: bold; color: #7c3aed; }
+                .title { font-size: 20px; margin: 10px 0; }
+                .section { margin: 15px 0; }
+                .detail-item { display: flex; justify-content: space-between; margin: 8px 0; }
+                .detail-label { color: #666; }
+                .detail-value { font-weight: bold; }
+                .total { text-align: center; font-size: 28px; font-weight: bold; margin: 25px 0; }
+                .footer { text-align: center; margin-top: 30px; color: #888; font-size: 12px; }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <div class="logo">AFROKINGVAP</div>
+                <div class="title">Reçu de Paiement</div>
+                <div style="color: #10b981; font-size: 16px; margin: 10px 0;">✅ Paiement Réussi</div>
+            </div>
+            
+            <div class="section">
+                <h3>Informations Commande</h3>
+                <div class="detail-item">
+                    <span class="detail-label">N° Commande:</span>
+                    <span class="detail-value">${params.orderId}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Date:</span>
+                    <span class="detail-value">${formatDate(params.timestamp)}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Référence:</span>
+                    <span class="detail-value">${params.token}</span>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h3>Informations Client</h3>
+                <div class="detail-item">
+                    <span class="detail-label">Nom:</span>
+                    <span class="detail-value">${params.customer}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Téléphone:</span>
+                    <span class="detail-value">${params.phone || 'Non renseigné'}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Email:</span>
+                    <span class="detail-value">${params.email || 'Non renseigné'}</span>
+                </div>
+            </div>
+            
+            <div class="total">
+                ${formatAmount(params.amount)}
+            </div>
+            
+            <div class="footer">
+                <p>Merci pour votre commande chez AfroKingVap</p>
+                <p>© 2025 AfroKingVap - Tous droits réservés</p>
+            </div>
+        </body>
+        </html>
+    `;
     
+    // Options pour le PDF
     const options = {
-        margin: 5, // Réduire les marges
+        margin: 10,
         filename: `reçu_afrokingvap_${params.orderId}.pdf`,
-        image: { 
-            type: 'jpeg', 
-            quality: 0.95 
-        },
         html2canvas: { 
             scale: 2,
             useCORS: true,
-            backgroundColor: '#ffffff',
-            logging: false,
-            scrollX: 0,
-            scrollY: 0
+            backgroundColor: '#ffffff'
         },
         jsPDF: { 
             unit: 'mm', 
             format: 'a4', 
-            orientation: 'portrait',
-            compress: true
+            orientation: 'portrait' 
         }
     };
     
-    // Afficher un message pendant la génération
-    const downloadBtn = document.querySelector('.btn-primary');
-    const originalText = downloadBtn.innerHTML;
-    downloadBtn.innerHTML = '<i>⏳</i> Génération du PDF...';
-    downloadBtn.disabled = true;
+    // Générer le PDF à partir du HTML simplifié
+    const element = document.createElement('div');
+    element.innerHTML = pdfContent;
+    document.body.appendChild(element);
     
-    // Générer le PDF avec un léger délai pour que les styles s'appliquent
-    setTimeout(() => {
-        html2pdf().set(options).from(element).save().then(() => {
-            // RESTAURER LES STYLES ORIGINAUX
-            restoreStyles(originalStyles);
-            
-            // Restaurer le bouton
-            downloadBtn.innerHTML = originalText;
-            downloadBtn.disabled = false;
-            
-            // Afficher une notification
-            alert('✅ Reçu téléchargé avec succès !');
-        }).catch(error => {
-            console.error('PDF generation error:', error);
-            downloadBtn.innerHTML = originalText;
-            downloadBtn.disabled = false;
-            alert('⚠️ Erreur lors de la génération du PDF');
-        });
-    }, 100);
+    html2pdf().set(options).from(element).save().then(() => {
+        document.body.removeChild(element);
+        alert('✅ Reçu téléchargé avec succès !');
+    });
 }
         
         // Retourner à la boutique
