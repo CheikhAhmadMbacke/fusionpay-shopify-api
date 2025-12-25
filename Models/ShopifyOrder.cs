@@ -1,48 +1,39 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FusionPayProxy.Models
 {
     public class ShopifyOrder
     {
+        [Key]
         public int Id { get; set; }
 
-        [MaxLength(100)]
+        [Required]
+        [MaxLength(50)]
         public string OrderId { get; set; } = string.Empty;
 
+        [MaxLength(20)]
+        public string? OrderNumber { get; set; }
+
         [MaxLength(100)]
-        public string OrderNumber { get; set; } = string.Empty;
-
-        [MaxLength(50)]
-        public string FinancialStatus { get; set; } = string.Empty; // pending, paid, refunded
-
-        [MaxLength(50)]
-        public string FulfillmentStatus { get; set; } = string.Empty;
-
-        [Column(TypeName = "decimal(18,2)")]
-        public decimal TotalPrice { get; set; }
+        public string? CustomerName { get; set; }
 
         [MaxLength(20)]
-        public string Currency { get; set; } = "XOF";
+        public string? CustomerPhone { get; set; }
 
+        [EmailAddress]
         [MaxLength(100)]
-        public string CustomerEmail { get; set; } = string.Empty;
+        public string? CustomerEmail { get; set; } // CHANGÉ EN NULLABLE
 
-        [MaxLength(50)]
-        public string CustomerPhone { get; set; } = string.Empty;
+        [Required]
+        public decimal TotalPrice { get; set; }
 
-        [MaxLength(200)]
-        public string CustomerName { get; set; } = string.Empty;
-
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
-        public DateTime? UpdatedAt { get; set; }
-
-        [Column(TypeName = "text")]
-        public string? OrderData { get; set; } // JSON complet de la commande
-
-        public bool WhatsAppSent { get; set; } = false;
-
+        public string Currency { get; set; } = "XOF";
+        public string FinancialStatus { get; set; } = "pending";
+        public string FulfillmentStatus { get; set; } = "unfulfilled";
+        public string? OrderData { get; set; }
+        public bool WhatsAppSent { get; set; }
         public DateTime? WhatsAppSentAt { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     }
 }
