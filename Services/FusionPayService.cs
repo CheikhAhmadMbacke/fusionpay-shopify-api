@@ -502,7 +502,7 @@ namespace FusionPayProxy.Services
 
     public class FusionPaySettings
     {
-        public string ApiBaseUrl { get; set; } = string.Empty;
-        public string YourApiBaseUrl { get; set; } = string.Empty;
+        public string ApiBaseUrl { get; set; } = "https://www.pay.moneyfusion.net/Ecommerce_de_AFROKINGVAP/29130a713a4596c7/pay/";
+        public string YourApiBaseUrl { get; set; } = "https://fusionpay-shopify-api.onrender.com";
     }
 }
