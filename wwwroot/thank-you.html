@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Paiement Réussi - AfroKingVap</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -245,7 +244,7 @@
     </style>
 </head>
 <body>
-    <div class="container" id="receipt">
+    <div class="container">
         <div class="success-header">
             <div class="success-icon">✅</div>
             <h1>Paiement Réussi !</h1>
@@ -255,7 +254,7 @@
         <div class="receipt-container">
             <div class="receipt-header">
                 <div class="logo">AFROKINGVAP</div>
-                <div class="receipt-title">Reçu de Paiement</div>
+                <div class="receipt-title">Confirmation de Commande</div>
             </div>
             
             <div class="receipt-details">
@@ -317,15 +316,12 @@
                 <div class="whatsapp-icon">📱</div>
                 <div>
                     <strong>Confirmation WhatsApp envoyée !</strong><br>
-                    Vous recevrez un message sur WhatsApp dans quelques instants.
+                    Vous recevrez un message sur WhatsApp dans quelques instants avec tous les détails de votre commande.
                 </div>
             </div>
         </div>
         
         <div class="buttons-container">
-            <button class="btn btn-primary" onclick="downloadReceipt()">
-                <i>📥</i> Télécharger le Reçu (PDF)
-            </button>
             <button class="btn btn-secondary" onclick="returnToStore()">
                 <i>🏪</i> Retourner sur le Site
             </button>
@@ -343,20 +339,16 @@
             const params = new URLSearchParams(window.location.search);
             const paramsObj = {};
             
-            // Données obligatoires
             paramsObj.orderId = params.get('orderId') || 'N/A';
             paramsObj.amount = params.get('amount') || '0';
             paramsObj.token = params.get('token') || 'N/A';
             paramsObj.orderNumber = params.get('orderNumber') || paramsObj.orderId;
-            
-            // Données optionnelles
             paramsObj.email = params.get('email') || '';
             paramsObj.customer = decodeURIComponent(params.get('customer') || 'Client');
             paramsObj.phone = params.get('phone') || '';
             paramsObj.currency = params.get('currency') || 'XOF';
             paramsObj.timestamp = params.get('timestamp') || new Date().toISOString().split('T')[0];
             
-            // Formatage spécial pour les espaces encodés deux fois
             paramsObj.customer = paramsObj.customer.replace(/%20/g, ' ').replace(/%2520/g, ' ');
             
             return paramsObj;
@@ -374,7 +366,6 @@
                         minute: '2-digit'
                     });
                 } else {
-                    // Format YYYYMMDDHHmmss
                     const year = dateString.substring(0, 4);
                     const month = dateString.substring(4, 6);
                     const day = dateString.substring(6, 8);
@@ -402,7 +393,6 @@
         function updateUI() {
             const params = getUrlParams();
             
-            // Mettre à jour tous les champs
             document.getElementById('orderId').textContent = params.orderId;
             document.getElementById('orderDate').textContent = formatDate(params.timestamp);
             document.getElementById('reference').textContent = params.token.substring(0, 16) + '...';
@@ -414,111 +404,7 @@
             document.getElementById('paymentMethod').textContent = 'Mobile Money';
             document.getElementById('transactionNumber').textContent = params.token;
             
-            // Afficher le montant correct
             document.title = `Paiement Réussi - ${formatAmount(params.amount)}`;
-        }
-        
-        // Télécharger le reçu en PDF - VERSION CORRIGÉE
-        function downloadReceipt() {
-            const params = getUrlParams();
-            
-            // OPTION 1: Utiliser directement l'élément existant (comme la première version)
-            const element = document.getElementById('receipt');
-            
-            // Options optimisées pour résoudre le problème de marge
-            const options = {
-                margin: 0.5, // Réduire les marges
-                filename: `reçu_afrokingvap_${params.orderId}.pdf`,
-                image: { 
-                    type: 'jpeg', 
-                    quality: 0.98 
-                },
-                html2canvas: { 
-                    scale: 2,
-                    useCORS: true,
-                    backgroundColor: '#ffffff',
-                    logging: false,
-                    scrollX: 0,
-                    scrollY: 0,
-                    windowWidth: element.scrollWidth,
-                    windowHeight: element.scrollHeight
-                },
-                jsPDF: { 
-                    unit: 'mm', 
-                    format: 'a4', 
-                    orientation: 'portrait',
-                    hotfixes: ['px_scaling'] // Correction importante
-                }
-            };
-            
-            // Afficher un message pendant la génération
-            const downloadBtn = document.querySelector('.btn-primary');
-            const originalText = downloadBtn.innerHTML;
-            downloadBtn.innerHTML = '<i>⏳</i> Génération du PDF...';
-            downloadBtn.disabled = true;
-            
-            // Générer le PDF
-            html2pdf().set(options).from(element).save().then(() => {
-                // Restaurer le texte original
-                downloadBtn.innerHTML = originalText;
-                downloadBtn.disabled = false;
-                
-                // Afficher une notification
-                alert('✅ Reçu téléchargé avec succès !');
-            }).catch(error => {
-                console.error('PDF error:', error);
-                downloadBtn.innerHTML = originalText;
-                downloadBtn.disabled = false;
-                alert('⚠️ Erreur lors de la génération du PDF');
-            });
-        }
-        
-        // OPTION 2: Version alternative si l'option 1 ne fonctionne pas
-        function downloadReceiptAlternative() {
-            const params = getUrlParams();
-            
-            // Créer une copie de l'élément sans les boutons
-            const originalElement = document.getElementById('receipt');
-            const elementCopy = originalElement.cloneNode(true);
-            
-            // Supprimer les boutons du PDF
-            const buttonsContainer = elementCopy.querySelector('.buttons-container');
-            const footer = elementCopy.querySelector('.footer');
-            if (buttonsContainer) buttonsContainer.remove();
-            if (footer) footer.remove();
-            
-            // Ajuster les styles pour le PDF
-            elementCopy.style.margin = '0';
-            elementCopy.style.padding = '20px';
-            elementCopy.style.borderRadius = '0';
-            elementCopy.style.boxShadow = 'none';
-            elementCopy.style.background = 'white';
-            
-            // Options
-            const options = {
-                margin: 1,
-                filename: `reçu_afrokingvap_${params.orderId}.pdf`,
-                html2canvas: { 
-                    scale: 2,
-                    backgroundColor: '#ffffff'
-                },
-                jsPDF: { 
-                    unit: 'mm', 
-                    format: 'a4', 
-                    orientation: 'portrait'
-                }
-            };
-            
-            const downloadBtn = document.querySelector('.btn-primary');
-            const originalText = downloadBtn.innerHTML;
-            downloadBtn.innerHTML = '<i>⏳</i> Génération du PDF...';
-            downloadBtn.disabled = true;
-            
-            html2pdf().set(options).from(elementCopy).save().then(() => {
-                downloadBtn.innerHTML = originalText;
-                downloadBtn.disabled = false;
-                alert('✅ Reçu téléchargé avec succès !');
-            });
         }
         
         // Retourner à la boutique
@@ -527,16 +413,7 @@
         }
         
         // Initialiser la page
-        document.addEventListener('DOMContentLoaded', function() {
-            updateUI();
-            
-            // Changer l'appel de la fonction si nécessaire
-            const downloadBtn = document.querySelector('.btn-primary');
-            downloadBtn.onclick = downloadReceipt; // Utiliser la version corrigée
-            
-            // Supprimer toute redirection automatique
-            clearTimeout(window.redirectTimeout);
-        });
+        document.addEventListener('DOMContentLoaded', updateUI);
     </script>
 </body>
 </html>
