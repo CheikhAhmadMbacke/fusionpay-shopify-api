@@ -29,6 +29,9 @@ namespace FusionPayProxy.Services
             _settings = settings.Value;
 
             ConfigureHttpClient();
+            _logger.LogInformation("🔧 FusionPay Settings Loaded:");
+            _logger.LogInformation("   - ApiBaseUrl: {ApiBaseUrl}", _settings.ApiBaseUrl);
+            _logger.LogInformation("   - YourApiBaseUrl: {YourApiBaseUrl}", _settings.YourApiBaseUrl);
         }
 
         private void ConfigureHttpClient()

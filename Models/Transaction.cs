@@ -16,9 +16,9 @@ namespace FusionPayProxy.Models
         [MaxLength(100)]
         public string ShopifyOrderNumber { get; set; } = string.Empty;
 
-        [Required]
+        // Dans Transaction.cs - REMPLACEZ la ligne actuelle par :
         [MaxLength(100)]
-        public string FusionPayToken { get; set; } = string.Empty; // tokenPay de FusionPay
+        public string? FusionPayToken { get; set; } // ✅ Supprimez [Required] et ajoutez ?
 
         [MaxLength(50)]
         public string Status { get; set; } = "pending"; // pending, paid, failed, cancelled, no paid
