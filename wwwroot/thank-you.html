@@ -242,6 +242,55 @@
                 width: 100%;
             }
         }
+        
+        /* Style invisible pour le contenu PDF */
+        #pdf-template {
+            position: absolute;
+            left: -9999px;
+            top: -9999px;
+            width: 210mm; /* Largeur A4 */
+            background: white;
+            padding: 20mm;
+            visibility: hidden;
+        }
+        
+        .pdf-header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #7c3aed;
+            padding-bottom: 15px;
+        }
+        
+        .pdf-logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #7c3aed;
+            margin-bottom: 10px;
+        }
+        
+        .pdf-title {
+            font-size: 22px;
+            color: #1f2937;
+            font-weight: 600;
+        }
+        
+        .pdf-subtitle {
+            color: #10b981;
+            font-size: 16px;
+            margin-top: 5px;
+        }
+        
+        .pdf-watermark {
+            position: absolute;
+            bottom: 30mm;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: rgba(0,0,0,0.1);
+            font-size: 48px;
+            transform: rotate(-45deg);
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
@@ -336,6 +385,21 @@
             <p>© 2025 AfroKingVap - Tous droits réservés</p>
         </div>
     </div>
+    
+    <!-- Template invisible pour le PDF -->
+    <div id="pdf-template">
+        <div class="pdf-header">
+            <div class="pdf-logo">AFROKINGVAP</div>
+            <div class="pdf-title">REÇU OFFICIEL DE PAIEMENT</div>
+            <div class="pdf-subtitle">✅ Transaction validée avec succès</div>
+        </div>
+        
+        <div id="pdf-content">
+            <!-- Le contenu sera injecté ici dynamiquement -->
+        </div>
+        
+        <div class="pdf-watermark">AFROKINGVAP</div>
+    </div>
 
     <script>
         // Récupérer les paramètres de l'URL
@@ -418,139 +482,131 @@
             document.title = `Paiement Réussi - ${formatAmount(params.amount)}`;
         }
         
-        // Fonction pour optimiser le PDF - AJOUTEZ CE CODE
-function optimizeForPDF() {
-    const receipt = document.getElementById('receipt');
-    
-    // 1. Sauvegarder les styles originaux
-    const originalStyles = {
-        margin: receipt.style.margin,
-        padding: receipt.style.padding,
-        background: receipt.style.background
-    };
-    
-    // 2. Appliquer des styles optimisés pour le PDF
-    receipt.style.margin = '0';
-    receipt.style.padding = '20px';
-    receipt.style.background = 'white';
-    
-    // 3. Réduire les espacements pour le PDF
-    const containers = document.querySelectorAll('.container, .receipt-container');
-    containers.forEach(container => {
-        container.style.margin = '0';
-        container.style.padding = '15px';
-    });
-    
-    return originalStyles; // Pour restaurer après
-}
-
-// Restaurer les styles originaux
-function restoreStyles(originalStyles) {
-    const receipt = document.getElementById('receipt');
-    
-    Object.keys(originalStyles).forEach(style => {
-        receipt.style[style] = originalStyles[style];
-    });
-}
-        // Télécharger le reçu en PDF
-function downloadReceipt() {
-    const params = getUrlParams();
-    
-    // Créer une copie simplifiée du reçu uniquement pour le PDF
-    const pdfContent = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <style>
-                body { margin: 0; padding: 10px; font-family: Arial, sans-serif; }
-                .header { text-align: center; margin-bottom: 20px; }
-                .logo { font-size: 24px; font-weight: bold; color: #7c3aed; }
-                .title { font-size: 20px; margin: 10px 0; }
-                .section { margin: 15px 0; }
-                .detail-item { display: flex; justify-content: space-between; margin: 8px 0; }
-                .detail-label { color: #666; }
-                .detail-value { font-weight: bold; }
-                .total { text-align: center; font-size: 28px; font-weight: bold; margin: 25px 0; }
-                .footer { text-align: center; margin-top: 30px; color: #888; font-size: 12px; }
-            </style>
-        </head>
-        <body>
-            <div class="header">
-                <div class="logo">AFROKINGVAP</div>
-                <div class="title">Reçu de Paiement</div>
-                <div style="color: #10b981; font-size: 16px; margin: 10px 0;">✅ Paiement Réussi</div>
-            </div>
-            
-            <div class="section">
-                <h3>Informations Commande</h3>
-                <div class="detail-item">
-                    <span class="detail-label">N° Commande:</span>
-                    <span class="detail-value">${params.orderId}</span>
+        // Préparer le contenu pour le PDF
+        function preparePDFContent(params) {
+            return `
+                <div style="margin: 20px 0;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px;">
+                        <div style="background: #f8fafc; padding: 15px; border-radius: 8px;">
+                            <h3 style="color: #4f46e5; margin-bottom: 12px; font-size: 16px;">📋 Informations Commande</h3>
+                            <div style="display: flex; justify-content: space-between; margin: 8px 0;">
+                                <span style="color: #6b7280;">N° Commande:</span>
+                                <span style="font-weight: bold;">${params.orderId}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin: 8px 0;">
+                                <span style="color: #6b7280;">Date:</span>
+                                <span style="font-weight: bold;">${formatDate(params.timestamp)}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin: 8px 0;">
+                                <span style="color: #6b7280;">Référence:</span>
+                                <span style="font-weight: bold;">${params.token}</span>
+                            </div>
+                        </div>
+                        
+                        <div style="background: #f8fafc; padding: 15px; border-radius: 8px;">
+                            <h3 style="color: #4f46e5; margin-bottom: 12px; font-size: 16px;">👤 Informations Client</h3>
+                            <div style="display: flex; justify-content: space-between; margin: 8px 0;">
+                                <span style="color: #6b7280;">Nom:</span>
+                                <span style="font-weight: bold;">${params.customer}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin: 8px 0;">
+                                <span style="color: #6b7280;">Téléphone:</span>
+                                <span style="font-weight: bold;">${params.phone || 'Non renseigné'}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin: 8px 0;">
+                                <span style="color: #6b7280;">Email:</span>
+                                <span style="font-weight: bold;">${params.email || 'Non renseigné'}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 25px;">
+                        <h3 style="color: #4f46e5; margin-bottom: 12px; font-size: 16px;">💳 Détails Paiement</h3>
+                        <div style="display: flex; justify-content: space-between; margin: 8px 0;">
+                            <span style="color: #6b7280;">Statut:</span>
+                            <span style="font-weight: bold; color: #10b981;">Payé</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin: 8px 0;">
+                            <span style="color: #6b7280;">Méthode:</span>
+                            <span style="font-weight: bold;">Mobile Money</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin: 8px 0;">
+                            <span style="color: #6b7280;">Transaction ID:</span>
+                            <span style="font-weight: bold;">${params.token}</span>
+                        </div>
+                    </div>
+                    
+                    <div style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 25px; border-radius: 12px; text-align: center;">
+                        <div style="font-size: 18px; margin-bottom: 10px;">Montant Total Payé</div>
+                        <div style="font-size: 32px; font-weight: bold;">${formatAmount(params.amount)}</div>
+                    </div>
+                    
+                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center;">
+                        <div style="color: #6b7280; font-size: 14px;">
+                            <p>Merci pour votre commande chez AfroKingVap</p>
+                            <p>Reçu généré le ${new Date().toLocaleDateString('fr-FR')}</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="detail-item">
-                    <span class="detail-label">Date:</span>
-                    <span class="detail-value">${formatDate(params.timestamp)}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Référence:</span>
-                    <span class="detail-value">${params.token}</span>
-                </div>
-            </div>
-            
-            <div class="section">
-                <h3>Informations Client</h3>
-                <div class="detail-item">
-                    <span class="detail-label">Nom:</span>
-                    <span class="detail-value">${params.customer}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Téléphone:</span>
-                    <span class="detail-value">${params.phone || 'Non renseigné'}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Email:</span>
-                    <span class="detail-value">${params.email || 'Non renseigné'}</span>
-                </div>
-            </div>
-            
-            <div class="total">
-                ${formatAmount(params.amount)}
-            </div>
-            
-            <div class="footer">
-                <p>Merci pour votre commande chez AfroKingVap</p>
-                <p>© 2025 AfroKingVap - Tous droits réservés</p>
-            </div>
-        </body>
-        </html>
-    `;
-    
-    // Options pour le PDF
-    const options = {
-        margin: 10,
-        filename: `reçu_afrokingvap_${params.orderId}.pdf`,
-        html2canvas: { 
-            scale: 2,
-            useCORS: true,
-            backgroundColor: '#ffffff'
-        },
-        jsPDF: { 
-            unit: 'mm', 
-            format: 'a4', 
-            orientation: 'portrait' 
+            `;
         }
-    };
-    
-    // Générer le PDF à partir du HTML simplifié
-    const element = document.createElement('div');
-    element.innerHTML = pdfContent;
-    document.body.appendChild(element);
-    
-    html2pdf().set(options).from(element).save().then(() => {
-        document.body.removeChild(element);
-        alert('✅ Reçu téléchargé avec succès !');
-    });
-}
+        
+        // Télécharger le reçu en PDF
+        function downloadReceipt() {
+            const params = getUrlParams();
+            
+            // Mettre à jour le template PDF avec le contenu
+            const pdfContent = document.getElementById('pdf-content');
+            pdfContent.innerHTML = preparePDFContent(params);
+            
+            // Récupérer l'élément template complet
+            const pdfTemplate = document.getElementById('pdf-template');
+            
+            // Options pour le PDF
+            const options = {
+                margin: 15,
+                filename: `reçu_afrokingvap_${params.orderId}.pdf`,
+                image: { 
+                    type: 'jpeg', 
+                    quality: 0.98 
+                },
+                html2canvas: { 
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: '#ffffff',
+                    logging: false,
+                    scrollX: 0,
+                    scrollY: 0
+                },
+                jsPDF: { 
+                    unit: 'mm', 
+                    format: 'a4', 
+                    orientation: 'portrait',
+                    compress: true
+                }
+            };
+            
+            // Afficher un message pendant la génération
+            const downloadBtn = document.querySelector('.btn-primary');
+            const originalText = downloadBtn.innerHTML;
+            downloadBtn.innerHTML = '<i>⏳</i> Génération du PDF...';
+            downloadBtn.disabled = true;
+            
+            // Générer le PDF à partir du template
+            html2pdf().set(options).from(pdfTemplate).save().then(() => {
+                // Restaurer le bouton
+                downloadBtn.innerHTML = originalText;
+                downloadBtn.disabled = false;
+                
+                // Afficher une notification
+                alert('✅ Reçu téléchargé avec succès !');
+            }).catch(error => {
+                console.error('PDF generation error:', error);
+                downloadBtn.innerHTML = originalText;
+                downloadBtn.disabled = false;
+                alert('⚠️ Erreur lors de la génération du PDF');
+            });
+        }
         
         // Retourner à la boutique
         function returnToStore() {
