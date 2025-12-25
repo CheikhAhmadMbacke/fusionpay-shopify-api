@@ -1,6 +1,6 @@
 {
   "Version": 1,
-  "Hash": "XYvNd7y1KdImNZltU9trIb3js9Z64T8jLb1ccN9tkfo=",
+  "Hash": "Oum405cOA4rDB/+nYCRDAKhUtkUPgT5OSzVMcHeqiXo=",
   "Source": "FusionPayProxy",
   "BasePath": "_content/FusionPayProxy",
   "Mode": "Default",
@@ -15,5 +15,25 @@
       "Pattern": "**"
     }
   ],
-  "Assets": []
+  "Assets": [
+    {
+      "Identity": "C:\\FusionPayProxy\\FusionPayProxy\\wwwroot\\thank-you.html",
+      "SourceId": "FusionPayProxy",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\FusionPayProxy\\FusionPayProxy\\wwwroot\\",
+      "BasePath": "_content/FusionPayProxy",
+      "RelativePath": "thank-you.html",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\thank-you.html"
+    }
+  ]
 }

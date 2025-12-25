@@ -1,1 +1,1 @@
-{"ContentRoots":["C:\\FusionPayProxy\\FusionPayProxy\\wwwroot\\"],"Root":{"Children":null,"Asset":null,"Patterns":[{"ContentRootIndex":0,"Pattern":"**","Depth":0}]}}
+{"ContentRoots":["C:\\FusionPayProxy\\FusionPayProxy\\wwwroot\\"],"Root":{"Children":{"thank-you.html":{"Children":null,"Asset":{"ContentRootIndex":0,"SubPath":"thank-you.html"},"Patterns":null}},"Asset":null,"Patterns":[{"ContentRootIndex":0,"Pattern":"**","Depth":0}]}}

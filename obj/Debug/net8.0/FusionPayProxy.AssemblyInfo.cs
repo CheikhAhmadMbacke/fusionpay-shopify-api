@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("FusionPayProxy")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+568b48faec43ca08e33f7c434b20826052d35e17")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+72b4b811ce5f89ffc00b7ad090d78fe4278a0bd6")]
 [assembly: System.Reflection.AssemblyProductAttribute("FusionPayProxy")]
 [assembly: System.Reflection.AssemblyTitleAttribute("FusionPayProxy")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

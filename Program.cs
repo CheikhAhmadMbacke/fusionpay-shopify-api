@@ -45,6 +45,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
         if (Directory.Exists(renderDataPath))
         {
             connectionString = $"Data Source={renderDataPath}/fusionpay.db";
+            Console.WriteLine($"📁 Using Render persistent path: {connectionString}");
         }
     }
 
@@ -74,7 +75,88 @@ builder.Services.Configure<AppSettings>(builder.Configuration.GetSection("App"))
 builder.Services.Configure<FusionPaySettings>(builder.Configuration.GetSection("FusionPay"));
 builder.Services.Configure<ShopifySettings>(builder.Configuration.GetSection("Shopify"));
 
+// ✅ AJOUTER LE LOGGING POUR LE CONTEXTE DE BASE DE DONNÉES
+builder.Services.AddLogging();
+
 var app = builder.Build();
+
+// ========== INITIALISATION DE LA BASE DE DONNÉES ==========
+// ✅ EXÉCUTER AVANT TOUT LE RESTE
+try
+{
+    using (var scope = app.Services.CreateScope())
+    {
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        logger.LogInformation("🚀 Starting database initialization...");
+
+        // Méthode 1: Vérifier la connexion
+        var canConnect = dbContext.Database.CanConnect();
+        logger.LogInformation(canConnect ? "✅ Database connection successful" : "⚠️ Cannot connect to database");
+
+        // Méthode 2: Vérifier les tables
+        var tablesCheckSql = @"
+            SELECT name FROM sqlite_master 
+            WHERE type='table' AND name IN ('Transactions', 'ShopifyOrders', 'WebhookLogs')";
+
+        try
+        {
+            var existingTables = new List<string>();
+            using (var command = dbContext.Database.GetDbConnection().CreateCommand())
+            {
+                command.CommandText = tablesCheckSql;
+                dbContext.Database.OpenConnection();
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        existingTables.Add(reader.GetString(0));
+                    }
+                }
+            }
+
+            logger.LogInformation($"📊 Found {existingTables.Count}/3 tables: {string.Join(", ", existingTables)}");
+
+            if (existingTables.Count < 3)
+            {
+                logger.LogWarning("⚠️ Some tables are missing, ensuring database is created...");
+                dbContext.Database.EnsureCreated();
+                logger.LogInformation("✅ Database tables created/verified");
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "❌ Error checking tables, trying to create database...");
+            dbContext.Database.EnsureCreated();
+            logger.LogInformation("✅ Database created as fallback");
+        }
+
+        // Méthode 3: Appliquer les migrations si disponibles
+        try
+        {
+            var pendingMigrations = dbContext.Database.GetPendingMigrations().ToList();
+            if (pendingMigrations.Any())
+            {
+                logger.LogInformation($"🔄 Applying {pendingMigrations.Count} pending migrations...");
+                dbContext.Database.Migrate();
+                logger.LogInformation("✅ Migrations applied successfully");
+            }
+        }
+        catch (Exception migrationEx)
+        {
+            logger.LogWarning(migrationEx, "⚠️ Could not apply migrations, using current schema");
+        }
+
+        logger.LogInformation("🎯 Database initialization completed");
+    }
+}
+catch (Exception ex)
+{
+    var logger = app.Services.GetRequiredService<ILogger<Program>>();
+    logger.LogCritical(ex, "💥 FATAL: Could not initialize database");
+    // Ne pas arrêter l'application, elle peut fonctionner en mode dégradé
+}
 
 // ========== CONFIGURATION DU PIPELINE HTTP ==========
 
@@ -151,6 +233,13 @@ app.MapGet("/health", async (AppDbContext dbContext) =>
         // Vérifier la base de données
         var canConnect = await dbContext.Database.CanConnectAsync();
 
+        // Vérifier les tables
+        var tablesCheckSql = @"
+            SELECT COUNT(*) FROM sqlite_master 
+            WHERE type='table' AND name IN ('Transactions', 'ShopifyOrders', 'WebhookLogs')";
+
+        var tablesCount = await dbContext.Database.ExecuteSqlRawAsync(tablesCheckSql);
+
         // Vérifier les configurations
         var fusionPayUrl = builder.Configuration["FusionPay:ApiBaseUrl"];
         var yourApiUrl = builder.Configuration["FusionPay:YourApiBaseUrl"];
@@ -159,6 +248,7 @@ app.MapGet("/health", async (AppDbContext dbContext) =>
         {
             Status = "Healthy",
             Database = canConnect ? "Connected" : "Disconnected",
+            Tables = $"{tablesCount}/3 tables present",
             Timestamp = DateTime.UtcNow,
             Services = new
             {
@@ -191,6 +281,28 @@ else
         detail: "Veuillez réessayer ultérieurement",
         statusCode: 500));
 }
+
+// ✅ ENDPOINT POUR FORCER LA CRÉATION DE LA BASE (DEBUG)
+app.MapGet("/admin/init-db", async (AppDbContext dbContext) =>
+{
+    try
+    {
+        await dbContext.Database.EnsureCreatedAsync();
+        return Results.Ok(new
+        {
+            success = true,
+            message = "Database initialized successfully",
+            timestamp = DateTime.UtcNow
+        });
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem(
+            title: "Database initialization failed",
+            detail: ex.Message,
+            statusCode: 500);
+    }
+});
 
 app.Run();
 
