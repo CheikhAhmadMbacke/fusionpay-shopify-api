@@ -73,7 +73,8 @@ namespace FusionPayProxy.Services
                     Amount = request.Amount,
                     Status = "initiating",
                     CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
+                    UpdatedAt = DateTime.UtcNow,
+                    FusionPayToken = null // ✅ DÉFINIR À NULL AU DÉPART
                 };
 
                 await _dbContext.Transactions.AddAsync(dbTransaction);
@@ -97,44 +98,36 @@ namespace FusionPayProxy.Services
                 _logger.LogDebug("📤 Sending to FusionPay: {Json}", jsonRequest);
 
                 // ==================== ÉTAPE 3: APPELER FUSIONPAY ====================
-                // ✅ CORRECTION CRITIQUE : Vérifier et formater l'URL
-                var fusionPayUrl = _settings.ApiBaseUrl?.Trim();
-
-                // VÉRIFICATION DE L'URL
-                if (string.IsNullOrEmpty(fusionPayUrl))
+                // ✅ VÉRIFIER LA CONFIGURATION FUSIONPAY
+                if (string.IsNullOrEmpty(_settings.ApiBaseUrl))
                 {
-                    _logger.LogError("❌ FusionPay API URL is null or empty");
+                    _logger.LogError("❌ FusionPay API URL is not configured in settings");
+
+                    dbTransaction.ErrorMessage = "Configuration FusionPay manquante";
+                    dbTransaction.Status = "failed";
+                    dbTransaction.UpdatedAt = DateTime.UtcNow;
+                    await _dbContext.SaveChangesAsync();
+
                     return new PaymentResponse
                     {
                         Success = false,
-                        ErrorMessage = "URL FusionPay non configurée",
+                        ErrorMessage = "Configuration FusionPay manquante. Vérifiez appsettings.json",
                         OrderId = request.OrderId,
+                        TransactionId = dbTransaction.Id,
                         Timestamp = DateTime.UtcNow
                     };
                 }
 
-                // S'assurer que l'URL se termine par un /
+                var fusionPayUrl = _settings.ApiBaseUrl.Trim();
+
+                // S'assurer que l'URL se termine par /
                 if (!fusionPayUrl.EndsWith("/"))
                 {
                     fusionPayUrl += "/";
                 }
 
-                // Vérifier que c'est une URL valide
-                if (!Uri.TryCreate(fusionPayUrl, UriKind.Absolute, out var uri))
-                {
-                    _logger.LogError("❌ Invalid FusionPay URL format: {Url}", fusionPayUrl);
-                    return new PaymentResponse
-                    {
-                        Success = false,
-                        ErrorMessage = "Format d'URL FusionPay invalide",
-                        OrderId = request.OrderId,
-                        Timestamp = DateTime.UtcNow
-                    };
-                }
-
                 _logger.LogInformation("🌍 Calling FusionPay API at: {Url}", fusionPayUrl);
 
-                // ✅ CRÉER UN NOUVEAU HTTPCLIENT (NE PAS RÉUTILISER)
                 using var httpClient = new HttpClient();
                 httpClient.Timeout = TimeSpan.FromSeconds(45);
                 httpClient.DefaultRequestHeaders.Accept.Add(
@@ -144,12 +137,10 @@ namespace FusionPayProxy.Services
 
                 try
                 {
-                    // ✅ APPELER AVEC L'URL COMPLÈTE
                     var response = await httpClient.PostAsync(fusionPayUrl, content);
                     var responseContent = await response.Content.ReadAsStringAsync();
                     _logger.LogDebug("📥 FusionPay raw response: {Response}", responseContent);
 
-                    // ==================== ÉTAPE 4: TRAITER LA RÉPONSE ====================
                     if (!response.IsSuccessStatusCode)
                     {
                         _logger.LogError("❌ FusionPay API error: {StatusCode} - {Content}",
@@ -223,22 +214,8 @@ namespace FusionPayProxy.Services
                         ? msgProp.GetString() ?? ""
                         : "";
 
-                    // ==================== ÉTAPE 5: GÉNÉRER L'URL DE REMERCIEMENT ====================
-                    string completeReturnUrl;
-                    try
-                    {
-                        completeReturnUrl = request.GenerateThankYouUrl(token, $"{_settings.YourApiBaseUrl}/thank-you.html");
-                        _logger.LogDebug("🔗 Generated thank you URL: {Url}", completeReturnUrl);
-                    }
-                    catch (Exception urlEx)
-                    {
-                        _logger.LogError(urlEx, "⚠️ Failed to generate thank you URL, using default");
-                        completeReturnUrl = $"{_settings.YourApiBaseUrl}/thank-you.html?orderId={Uri.EscapeDataString(request.OrderId)}&token={Uri.EscapeDataString(token)}";
-                    }
-
-                    // ==================== ÉTAPE 6: METTRE À JOUR LA TRANSACTION ====================
-                    dbTransaction.FusionPayToken = token;
-                    dbTransaction.ReturnUrl = completeReturnUrl;
+                    // ==================== METTRE À JOUR LA TRANSACTION ====================
+                    dbTransaction.FusionPayToken = token; // ✅ MAINTENANT ON A LE TOKEN
                     dbTransaction.Status = isSuccess ? "pending" : "failed";
                     dbTransaction.UpdatedAt = DateTime.UtcNow;
 
@@ -249,11 +226,13 @@ namespace FusionPayProxy.Services
 
                     await _dbContext.SaveChangesAsync();
 
-                    // ==================== ÉTAPE 7: PRÉPARER LA RÉPONSE ====================
+                    // ==================== PRÉPARER LA RÉPONSE ====================
                     if (isSuccess)
                     {
                         _logger.LogInformation("✅ Payment initiated successfully for order {OrderId}. Token: {Token}",
                             request.OrderId, token);
+
+                        string completeReturnUrl = request.GenerateThankYouUrl(token, $"{_settings.YourApiBaseUrl}/thank-you.html");
 
                         return new PaymentResponse
                         {
@@ -286,11 +265,18 @@ namespace FusionPayProxy.Services
                 catch (HttpRequestException httpEx)
                 {
                     _logger.LogError(httpEx, "❌ HTTP request error to FusionPay");
+
+                    dbTransaction.ErrorMessage = $"HTTP Error: {httpEx.Message}";
+                    dbTransaction.Status = "failed";
+                    dbTransaction.UpdatedAt = DateTime.UtcNow;
+                    await _dbContext.SaveChangesAsync();
+
                     return new PaymentResponse
                     {
                         Success = false,
                         ErrorMessage = $"Erreur réseau: {httpEx.Message}",
                         OrderId = request.OrderId,
+                        TransactionId = dbTransaction.Id,
                         Timestamp = DateTime.UtcNow
                     };
                 }

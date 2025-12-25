@@ -126,7 +126,7 @@ namespace FusionPayProxy.Data
             modelBuilder.Entity<Transaction>(entity =>
             {
                 entity.HasKey(e => e.Id);
-                entity.HasIndex(t => t.FusionPayToken).IsUnique();
+                //entity.HasIndex(t => t.FusionPayToken).IsUnique();
                 entity.HasIndex(t => t.ShopifyOrderId);
                 entity.HasIndex(t => t.Status);
                 entity.HasIndex(t => t.CreatedAt);
