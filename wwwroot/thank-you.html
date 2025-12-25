@@ -418,40 +418,97 @@
             document.title = `Paiement Réussi - ${formatAmount(params.amount)}`;
         }
         
+        // Fonction pour optimiser le PDF - AJOUTEZ CE CODE
+function optimizeForPDF() {
+    const receipt = document.getElementById('receipt');
+    
+    // 1. Sauvegarder les styles originaux
+    const originalStyles = {
+        margin: receipt.style.margin,
+        padding: receipt.style.padding,
+        background: receipt.style.background
+    };
+    
+    // 2. Appliquer des styles optimisés pour le PDF
+    receipt.style.margin = '0';
+    receipt.style.padding = '20px';
+    receipt.style.background = 'white';
+    
+    // 3. Réduire les espacements pour le PDF
+    const containers = document.querySelectorAll('.container, .receipt-container');
+    containers.forEach(container => {
+        container.style.margin = '0';
+        container.style.padding = '15px';
+    });
+    
+    return originalStyles; // Pour restaurer après
+}
+
+// Restaurer les styles originaux
+function restoreStyles(originalStyles) {
+    const receipt = document.getElementById('receipt');
+    
+    Object.keys(originalStyles).forEach(style => {
+        receipt.style[style] = originalStyles[style];
+    });
+}
         // Télécharger le reçu en PDF
-        function downloadReceipt() {
-            const element = document.getElementById('receipt');
-            const params = getUrlParams();
-            
-            const options = {
-                margin: 10,
-                filename: `reçu_afrokingvap_${params.orderId}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { 
-                    scale: 2,
-                    useCORS: true,
-                    backgroundColor: '#ffffff'
-                },
-                jsPDF: { 
-                    unit: 'mm', 
-                    format: 'a4', 
-                    orientation: 'portrait' 
-                }
-            };
-            
-            // Afficher un message pendant la génération
-            const originalText = document.querySelector('.btn-primary').innerHTML;
-            document.querySelector('.btn-primary').innerHTML = '<i>⏳</i> Génération du PDF...';
-            
-            // Générer le PDF
-            html2pdf().set(options).from(element).save().then(() => {
-                // Restaurer le texte original
-                document.querySelector('.btn-primary').innerHTML = originalText;
-                
-                // Afficher une notification
-                alert('Reçu téléchargé avec succès !');
-            });
+function downloadReceipt() {
+    const element = document.getElementById('receipt');
+    const params = getUrlParams();
+    
+    // OPTIMISER LES STYLES POUR LE PDF
+    const originalStyles = optimizeForPDF();
+    
+    const options = {
+        margin: 5, // Réduire les marges
+        filename: `reçu_afrokingvap_${params.orderId}.pdf`,
+        image: { 
+            type: 'jpeg', 
+            quality: 0.95 
+        },
+        html2canvas: { 
+            scale: 2,
+            useCORS: true,
+            backgroundColor: '#ffffff',
+            logging: false,
+            scrollX: 0,
+            scrollY: 0
+        },
+        jsPDF: { 
+            unit: 'mm', 
+            format: 'a4', 
+            orientation: 'portrait',
+            compress: true
         }
+    };
+    
+    // Afficher un message pendant la génération
+    const downloadBtn = document.querySelector('.btn-primary');
+    const originalText = downloadBtn.innerHTML;
+    downloadBtn.innerHTML = '<i>⏳</i> Génération du PDF...';
+    downloadBtn.disabled = true;
+    
+    // Générer le PDF avec un léger délai pour que les styles s'appliquent
+    setTimeout(() => {
+        html2pdf().set(options).from(element).save().then(() => {
+            // RESTAURER LES STYLES ORIGINAUX
+            restoreStyles(originalStyles);
+            
+            // Restaurer le bouton
+            downloadBtn.innerHTML = originalText;
+            downloadBtn.disabled = false;
+            
+            // Afficher une notification
+            alert('✅ Reçu téléchargé avec succès !');
+        }).catch(error => {
+            console.error('PDF generation error:', error);
+            downloadBtn.innerHTML = originalText;
+            downloadBtn.disabled = false;
+            alert('⚠️ Erreur lors de la génération du PDF');
+        });
+    }, 100);
+}
         
         // Retourner à la boutique
         function returnToStore() {
