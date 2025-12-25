@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Paiement Réussi - AfroKingVap</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -11,7 +12,7 @@
             box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-
+        
         body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
@@ -20,352 +21,449 @@
             align-items: center;
             padding: 20px;
         }
-
+        
         .container {
             background: white;
             border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            max-width: 500px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 800px;
             width: 100%;
+            padding: 40px;
+            position: relative;
             overflow: hidden;
         }
-
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 40px 30px;
+        
+        .success-header {
             text-align: center;
+            margin-bottom: 40px;
         }
-
+        
         .success-icon {
             font-size: 80px;
+            color: #10b981;
             margin-bottom: 20px;
-            animation: bounce 1s ease infinite alternate;
+            animation: bounce 2s infinite;
         }
-
+        
         @keyframes bounce {
-            from {
-                transform: translateY(0);
-            }
-
-            to {
-                transform: translateY(-10px);
-            }
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
         }
-
-        .header h1 {
-            font-size: 28px;
+        
+        h1 {
+            color: #1f2937;
+            font-size: 2.5rem;
             margin-bottom: 10px;
-            font-weight: 600;
         }
-
-        .header p {
-            opacity: 0.9;
-            font-size: 16px;
+        
+        .subtitle {
+            color: #6b7280;
+            font-size: 1.1rem;
         }
-
-        .content {
-            padding: 40px 30px;
+        
+        .receipt-container {
+            background: #f9fafb;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 40px;
+            border: 2px solid #e5e7eb;
         }
-
-        .order-info {
-            background: #f8f9fa;
-            border-radius: 12px;
-            padding: 25px;
-            margin-bottom: 30px;
-            border-left: 4px solid #667eea;
-        }
-
-        .info-row {
+        
+        .receipt-header {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 12px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid #e9ecef;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e5e7eb;
         }
-
-            .info-row:last-child {
-                border-bottom: none;
-                margin-bottom: 0;
-                padding-bottom: 0;
-            }
-
-        .label {
-            color: #6c757d;
-            font-weight: 500;
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #7c3aed;
         }
-
-        .value {
-            color: #212529;
+        
+        .receipt-title {
+            font-size: 1.8rem;
+            color: #1f2937;
             font-weight: 600;
         }
-
-        .actions {
-            display: flex;
-            gap: 15px;
-            margin-top: 30px;
+        
+        .receipt-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
         }
-
+        
+        .detail-group {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        
+        .detail-group h3 {
+            color: #4f46e5;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .detail-group h3 i {
+            font-size: 1.2rem;
+        }
+        
+        .detail-item {
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        
+        .detail-label {
+            color: #6b7280;
+            font-weight: 500;
+        }
+        
+        .detail-value {
+            color: #1f2937;
+            font-weight: 600;
+            text-align: right;
+        }
+        
+        .total-amount {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .total-label {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+        
+        .amount {
+            font-size: 3rem;
+            font-weight: bold;
+        }
+        
+        .buttons-container {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
         .btn {
-            flex: 1;
-            padding: 15px;
+            padding: 16px 32px;
             border: none;
             border-radius: 10px;
-            font-size: 16px;
+            font-size: 1.1rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            text-align: center;
-            text-decoration: none;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 10px;
+            min-width: 200px;
         }
-
+        
         .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
             color: white;
         }
-
-            .btn-primary:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
-            }
-
+        
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3);
+        }
+        
         .btn-secondary {
-            background: #f8f9fa;
-            color: #495057;
-            border: 2px solid #e9ecef;
+            background: #f3f4f6;
+            color: #4b5563;
+            border: 2px solid #d1d5db;
         }
-
-            .btn-secondary:hover {
-                background: #e9ecef;
-                transform: translateY(-2px);
-            }
-
-        .timer {
-            text-align: center;
-            color: #6c757d;
-            margin-top: 25px;
-            font-size: 14px;
+        
+        .btn-secondary:hover {
+            background: #e5e7eb;
+            transform: translateY(-3px);
         }
-
-            .timer span {
-                font-weight: 600;
-                color: #667eea;
-            }
-
+        
         .whatsapp-notice {
-            background: #25D366;
-            color: white;
-            padding: 15px;
+            background: #d1fae5;
+            border: 2px solid #10b981;
             border-radius: 10px;
-            margin-top: 25px;
+            padding: 20px;
             text-align: center;
-            animation: pulse 2s infinite;
+            margin-top: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
         }
-
-        @keyframes pulse {
-            0% {
-                transform: scale(1);
-            }
-
-            50% {
-                transform: scale(1.02);
-            }
-
-            100% {
-                transform: scale(1);
-            }
-        }
-
+        
         .whatsapp-icon {
-            font-size: 24px;
-            margin-right: 10px;
-            vertical-align: middle;
+            color: #25d366;
+            font-size: 2rem;
         }
-
+        
         .footer {
             text-align: center;
-            padding: 20px;
-            border-top: 1px solid #e9ecef;
-            color: #6c757d;
-            font-size: 14px;
+            margin-top: 40px;
+            color: #9ca3af;
+            font-size: 0.9rem;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
         }
-
-        @media (max-width: 480px) {
+        
+        @media (max-width: 768px) {
             .container {
-                border-radius: 15px;
+                padding: 20px;
             }
-
-            .header {
-                padding: 30px 20px;
+            
+            .receipt-details {
+                grid-template-columns: 1fr;
             }
-
-            .content {
-                padding: 30px 20px;
-            }
-
-            .actions {
+            
+            .buttons-container {
                 flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
             }
         }
     </style>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="success-icon">
-                <i class="fas fa-check-circle"></i>
-            </div>
+    <div class="container" id="receipt">
+        <div class="success-header">
+            <div class="success-icon">✅</div>
             <h1>Paiement Réussi !</h1>
-            <p>Merci pour votre commande chez AfroKingVap</p>
+            <p class="subtitle">Merci pour votre commande chez AfroKingVap</p>
         </div>
-
-        <div class="content">
-            <div class="order-info">
-                <div class="info-row">
-                    <span class="label">N° de Commande :</span>
-                    <span id="orderId" class="value">Chargement...</span>
+        
+        <div class="receipt-container">
+            <div class="receipt-header">
+                <div class="logo">AFROKINGVAP</div>
+                <div class="receipt-title">Reçu de Paiement</div>
+            </div>
+            
+            <div class="receipt-details">
+                <div class="detail-group">
+                    <h3><i>📋</i> Informations Commande</h3>
+                    <div class="detail-item">
+                        <span class="detail-label">N° Commande:</span>
+                        <span class="detail-value" id="orderId">Chargement...</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Date:</span>
+                        <span class="detail-value" id="orderDate">Chargement...</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Référence:</span>
+                        <span class="detail-value" id="reference">Chargement...</span>
+                    </div>
                 </div>
-                <div class="info-row">
-                    <span class="label">Montant :</span>
-                    <span id="amount" class="value">Chargement...</span>
+                
+                <div class="detail-group">
+                    <h3><i>👤</i> Informations Client</h3>
+                    <div class="detail-item">
+                        <span class="detail-label">Nom:</span>
+                        <span class="detail-value" id="customerName">Chargement...</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Téléphone:</span>
+                        <span class="detail-value" id="customerPhone">Chargement...</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Email:</span>
+                        <span class="detail-value" id="customerEmail">Chargement...</span>
+                    </div>
                 </div>
-                <div class="info-row">
-                    <span class="label">Statut :</span>
-                    <span id="status" class="value" style="color: #28a745;">Payé</span>
-                </div>
-                <div class="info-row">
-                    <span class="label">Date :</span>
-                    <span id="date" class="value">Chargement...</span>
-                </div>
-                <div class="info-row">
-                    <span class="label">Référence :</span>
-                    <span id="reference" class="value">Chargement...</span>
+                
+                <div class="detail-group">
+                    <h3><i>💳</i> Détails Paiement</h3>
+                    <div class="detail-item">
+                        <span class="detail-label">Statut:</span>
+                        <span class="detail-value" style="color: #10b981; font-weight: bold;" id="status">Payé</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Méthode:</span>
+                        <span class="detail-value" id="paymentMethod">Mobile Money</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Transaction ID:</span>
+                        <span class="detail-value" id="transactionNumber">Chargement...</span>
+                    </div>
                 </div>
             </div>
-
+            
+            <div class="total-amount">
+                <div class="total-label">Montant Total Payé</div>
+                <div class="amount" id="amount">0 XOF</div>
+            </div>
+            
             <div class="whatsapp-notice">
-                <i class="fab fa-whatsapp whatsapp-icon"></i>
-                Vous recevrez une confirmation WhatsApp dans quelques instants
-            </div>
-
-            <div class="actions">
-                <a href="https://afrokingvap.com" class="btn btn-primary">
-                    <i class="fas fa-home"></i>
-                    Retour à la boutique
-                </a>
-                <a href="https://afrokingvap.com/orders" class="btn btn-secondary">
-                    <i class="fas fa-shopping-bag"></i>
-                    Voir mes commandes
-                </a>
-            </div>
-
-            <div class="timer">
-                Redirection vers la boutique dans <span id="countdown">10</span> secondes...
+                <div class="whatsapp-icon">📱</div>
+                <div>
+                    <strong>Confirmation WhatsApp envoyée !</strong><br>
+                    Vous recevrez un message sur WhatsApp dans quelques instants.
+                </div>
             </div>
         </div>
-
+        
+        <div class="buttons-container">
+            <button class="btn btn-primary" onclick="downloadReceipt()">
+                <i>📥</i> Télécharger le Reçu (PDF)
+            </button>
+            <button class="btn btn-secondary" onclick="returnToStore()">
+                <i>🏪</i> Retourner sur le Site
+            </button>
+        </div>
+        
         <div class="footer">
-            <p>Besoin d'aide ? Contactez-nous au <strong>+221 77 123 45 67</strong></p>
-            <p>© 2024 AfroKingVap. Tous droits réservés.</p>
+            <p>Merci de votre confiance ! Pour toute question, contactez notre service client.</p>
+            <p>© 2025 AfroKingVap - Tous droits réservés</p>
         </div>
     </div>
 
     <script>
         // Récupérer les paramètres de l'URL
-        function getQueryParam(name) {
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get(name);
+        function getUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            const paramsObj = {};
+            
+            // Données obligatoires
+            paramsObj.orderId = params.get('orderId') || 'N/A';
+            paramsObj.amount = params.get('amount') || '0';
+            paramsObj.token = params.get('token') || 'N/A';
+            paramsObj.orderNumber = params.get('orderNumber') || paramsObj.orderId;
+            
+            // Données optionnelles
+            paramsObj.email = params.get('email') || '';
+            paramsObj.customer = decodeURIComponent(params.get('customer') || 'Client');
+            paramsObj.phone = params.get('phone') || '';
+            paramsObj.currency = params.get('currency') || 'XOF';
+            paramsObj.timestamp = params.get('timestamp') || new Date().toISOString().split('T')[0];
+            
+            // Formatage spécial pour les espaces encodés deux fois
+            paramsObj.customer = paramsObj.customer.replace(/%20/g, ' ').replace(/%2520/g, ' ');
+            
+            return paramsObj;
         }
-
-        // Afficher les informations de la commande
-        function displayOrderInfo() {
-            const orderId = getQueryParam('orderId') || 'N/A';
-            const amount = getQueryParam('amount') || '0';
-            const token = getQueryParam('token') || '';
-            const status = getQueryParam('status') || 'paid';
-
-            // Formater le montant
-            const formattedAmount = new Intl.NumberFormat('fr-FR', {
-                style: 'currency',
-                currency: 'XOF'
-            }).format(parseFloat(amount));
-
-            // Mettre à jour les éléments
-            document.getElementById('orderId').textContent = orderId;
-            document.getElementById('amount').textContent = formattedAmount;
-            document.getElementById('date').textContent = new Date().toLocaleDateString('fr-FR');
-            document.getElementById('reference').textContent = token.substring(0, 12) + '...';
-
-            // Mettre à jour le statut avec couleur
-            const statusElement = document.getElementById('status');
-            if (status === 'paid') {
-                statusElement.textContent = 'Payé';
-                statusElement.style.color = '#28a745';
-            } else if (status === 'pending') {
-                statusElement.textContent = 'En attente';
-                statusElement.style.color = '#ffc107';
-            }
-        }
-
-        // Compte à rebours pour la redirection
-        function startCountdown() {
-            let seconds = 10;
-            const countdownElement = document.getElementById('countdown');
-
-            const interval = setInterval(() => {
-                seconds--;
-                countdownElement.textContent = seconds;
-
-                if (seconds <= 0) {
-                    clearInterval(interval);
-                    window.location.href = 'https://afrokingvap.com';
-                }
-            }, 1000);
-        }
-
-        // Vérifier le statut du paiement via l'API
-        async function checkPaymentStatus(token) {
-            if (!token) return;
-
+        
+        // Formater la date
+        function formatDate(dateString) {
             try {
-                const response = await fetch(`https://fusionpay-shopify-api.onrender.com/api/payment/verify/${token}`);
-                const data = await response.json();
-
-                if (data.status === 'paid') {
-                    // Paiement confirmé
-                    console.log('Paiement confirmé par API');
-                } else if (data.status === 'pending') {
-                    // Paiement en attente
-                    document.getElementById('status').textContent = 'En attente de confirmation';
-                    document.getElementById('status').style.color = '#ffc107';
+                if (dateString.includes('T')) {
+                    return new Date(dateString).toLocaleDateString('fr-FR', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                } else {
+                    // Format YYYYMMDDHHmmss
+                    const year = dateString.substring(0, 4);
+                    const month = dateString.substring(4, 6);
+                    const day = dateString.substring(6, 8);
+                    const hour = dateString.substring(8, 10);
+                    const minute = dateString.substring(10, 12);
+                    
+                    return `${day}/${month}/${year} à ${hour}:${minute}`;
                 }
-            } catch (error) {
-                console.error('Erreur vérification paiement:', error);
+            } catch (e) {
+                return new Date().toLocaleDateString('fr-FR');
             }
         }
-
+        
+        // Formater le montant
+        function formatAmount(amount) {
+            const numAmount = parseInt(amount) || 0;
+            return new Intl.NumberFormat('fr-FR', {
+                style: 'currency',
+                currency: 'XOF',
+                minimumFractionDigits: 0
+            }).format(numAmount);
+        }
+        
+        // Mettre à jour l'interface
+        function updateUI() {
+            const params = getUrlParams();
+            
+            // Mettre à jour tous les champs
+            document.getElementById('orderId').textContent = params.orderId;
+            document.getElementById('orderDate').textContent = formatDate(params.timestamp);
+            document.getElementById('reference').textContent = params.token.substring(0, 16) + '...';
+            document.getElementById('customerName').textContent = params.customer;
+            document.getElementById('customerPhone').textContent = params.phone || 'Non renseigné';
+            document.getElementById('customerEmail').textContent = params.email || 'Non renseigné';
+            document.getElementById('amount').textContent = formatAmount(params.amount);
+            document.getElementById('status').textContent = 'Payé';
+            document.getElementById('paymentMethod').textContent = 'Mobile Money';
+            document.getElementById('transactionNumber').textContent = params.token;
+            
+            // Afficher le montant correct
+            document.title = `Paiement Réussi - ${formatAmount(params.amount)}`;
+        }
+        
+        // Télécharger le reçu en PDF
+        function downloadReceipt() {
+            const element = document.getElementById('receipt');
+            const params = getUrlParams();
+            
+            const options = {
+                margin: 10,
+                filename: `reçu_afrokingvap_${params.orderId}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { 
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: '#ffffff'
+                },
+                jsPDF: { 
+                    unit: 'mm', 
+                    format: 'a4', 
+                    orientation: 'portrait' 
+                }
+            };
+            
+            // Afficher un message pendant la génération
+            const originalText = document.querySelector('.btn-primary').innerHTML;
+            document.querySelector('.btn-primary').innerHTML = '<i>⏳</i> Génération du PDF...';
+            
+            // Générer le PDF
+            html2pdf().set(options).from(element).save().then(() => {
+                // Restaurer le texte original
+                document.querySelector('.btn-primary').innerHTML = originalText;
+                
+                // Afficher une notification
+                alert('Reçu téléchargé avec succès !');
+            });
+        }
+        
+        // Retourner à la boutique
+        function returnToStore() {
+            window.location.href = 'https://afrokingvap.com';
+        }
+        
         // Initialiser la page
-        document.addEventListener('DOMContentLoaded', () => {
-            displayOrderInfo();
-            startCountdown();
-
-            // Vérifier le statut via l'API
-            const token = getQueryParam('token');
-            if (token) {
-                // Vérifier immédiatement
-                checkPaymentStatus(token);
-
-                // Vérifier à nouveau après 5 secondes
-                setTimeout(() => checkPaymentStatus(token), 5000);
-            }
-
-            // Log analytics
-            console.log('Thank you page loaded');
+        document.addEventListener('DOMContentLoaded', function() {
+            updateUI();
+            
+            // Supprimer toute redirection automatique
+            clearTimeout(window.redirectTimeout);
         });
     </script>
 </body>
