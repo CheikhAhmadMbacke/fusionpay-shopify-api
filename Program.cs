@@ -21,6 +21,7 @@ builder.Services.AddCors(options =>
         {
             policy.WithOrigins(
                     "https://afrokingvap.com",
+                    "https://www.afrokingvap.com",
                     "https://checkout.shopify.com",
                     "https://fusionpay-shopify-api.onrender.com",
                     "http://localhost:3000",
