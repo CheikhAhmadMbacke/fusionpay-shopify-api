@@ -11,7 +11,7 @@
             box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        
+
         body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
@@ -20,7 +20,7 @@
             align-items: center;
             padding: 20px;
         }
-        
+
         .container {
             background: white;
             border-radius: 20px;
@@ -31,35 +31,40 @@
             position: relative;
             overflow: hidden;
         }
-        
+
         .success-header {
             text-align: center;
             margin-bottom: 40px;
         }
-        
+
         .success-icon {
             font-size: 80px;
             color: #10b981;
             margin-bottom: 20px;
             animation: bounce 2s infinite;
         }
-        
+
         @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
+            0%, 100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
         }
-        
+
         h1 {
             color: #1f2937;
             font-size: 2.5rem;
             margin-bottom: 10px;
         }
-        
+
         .subtitle {
             color: #6b7280;
             font-size: 1.1rem;
         }
-        
+
         .receipt-container {
             background: #f9fafb;
             border-radius: 15px;
@@ -67,7 +72,7 @@
             margin-bottom: 40px;
             border: 2px solid #e5e7eb;
         }
-        
+
         .receipt-header {
             display: flex;
             justify-content: space-between;
@@ -76,46 +81,46 @@
             padding-bottom: 20px;
             border-bottom: 2px solid #e5e7eb;
         }
-        
+
         .logo {
             font-size: 1.5rem;
             font-weight: bold;
             color: #7c3aed;
         }
-        
+
         .receipt-title {
             font-size: 1.8rem;
             color: #1f2937;
             font-weight: 600;
         }
-        
+
         .receipt-details {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 25px;
             margin-bottom: 30px;
         }
-        
+
         .detail-group {
             background: white;
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.05);
         }
-        
-        .detail-group h3 {
-            color: #4f46e5;
-            margin-bottom: 15px;
-            font-size: 1.1rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .detail-group h3 i {
-            font-size: 1.2rem;
-        }
-        
+
+            .detail-group h3 {
+                color: #4f46e5;
+                margin-bottom: 15px;
+                font-size: 1.1rem;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+                .detail-group h3 i {
+                    font-size: 1.2rem;
+                }
+
         .detail-item {
             margin-bottom: 12px;
             display: flex;
@@ -123,18 +128,18 @@
             padding-bottom: 8px;
             border-bottom: 1px solid #f3f4f6;
         }
-        
+
         .detail-label {
             color: #6b7280;
             font-weight: 500;
         }
-        
+
         .detail-value {
             color: #1f2937;
             font-weight: 600;
             text-align: right;
         }
-        
+
         .total-amount {
             background: linear-gradient(135deg, #10b981, #059669);
             color: white;
@@ -143,24 +148,24 @@
             text-align: center;
             margin: 30px 0;
         }
-        
+
         .total-label {
             font-size: 1.2rem;
             margin-bottom: 10px;
         }
-        
+
         .amount {
             font-size: 3rem;
             font-weight: bold;
         }
-        
+
         .buttons-container {
             display: flex;
             gap: 20px;
             flex-wrap: wrap;
             justify-content: center;
         }
-        
+
         .btn {
             padding: 16px 32px;
             border: none;
@@ -175,28 +180,28 @@
             gap: 10px;
             min-width: 200px;
         }
-        
+
         .btn-primary {
-            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            background: linear-gradient(135deg, #25D366, #128C7E);
             color: white;
         }
-        
-        .btn-primary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3);
-        }
-        
+
+            .btn-primary:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 10px 20px rgba(37, 211, 102, 0.3);
+            }
+
         .btn-secondary {
             background: #f3f4f6;
             color: #4b5563;
             border: 2px solid #d1d5db;
         }
-        
-        .btn-secondary:hover {
-            background: #e5e7eb;
-            transform: translateY(-3px);
-        }
-        
+
+            .btn-secondary:hover {
+                background: #e5e7eb;
+                transform: translateY(-3px);
+            }
+
         .whatsapp-notice {
             background: #d1fae5;
             border: 2px solid #10b981;
@@ -204,17 +209,14 @@
             padding: 20px;
             text-align: center;
             margin-top: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
+            display: none; /* Caché par défaut */
         }
-        
+
         .whatsapp-icon {
             color: #25d366;
             font-size: 2rem;
         }
-        
+
         .footer {
             text-align: center;
             margin-top: 40px;
@@ -223,20 +225,39 @@
             padding-top: 20px;
             border-top: 1px solid #e5e7eb;
         }
-        
+
+        .payment-status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .status-paid {
+            background-color: #10b981;
+            color: white;
+        }
+
+        .status-pending {
+            background-color: #f59e0b;
+            color: white;
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 20px;
             }
-            
+
             .receipt-details {
                 grid-template-columns: 1fr;
             }
-            
+
             .buttons-container {
                 flex-direction: column;
             }
-            
+
             .btn {
                 width: 100%;
             }
@@ -250,13 +271,13 @@
             <h1>Paiement Réussi !</h1>
             <p class="subtitle">Merci pour votre commande chez AfroKingVap</p>
         </div>
-        
+
         <div class="receipt-container">
             <div class="receipt-header">
                 <div class="logo">AFROKINGVAP</div>
                 <div class="receipt-title">Confirmation de Commande</div>
             </div>
-            
+
             <div class="receipt-details">
                 <div class="detail-group">
                     <h3><i>📋</i> Informations Commande</h3>
@@ -272,8 +293,12 @@
                         <span class="detail-label">Référence:</span>
                         <span class="detail-value" id="reference">Chargement...</span>
                     </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Zone Livraison:</span>
+                        <span class="detail-value" id="deliveryZone">Chargement...</span>
+                    </div>
                 </div>
-                
+
                 <div class="detail-group">
                     <h3><i>👤</i> Informations Client</h3>
                     <div class="detail-item">
@@ -285,16 +310,19 @@
                         <span class="detail-value" id="customerPhone">Chargement...</span>
                     </div>
                     <div class="detail-item">
-                        <span class="detail-label">Email:</span>
-                        <span class="detail-value" id="customerEmail">Chargement...</span>
+                        <span class="detail-label">Adresse:</span>
+                        <span class="detail-value" id="customerAddress">Chargement...</span>
                     </div>
                 </div>
-                
+
                 <div class="detail-group">
                     <h3><i>💳</i> Détails Paiement</h3>
                     <div class="detail-item">
                         <span class="detail-label">Statut:</span>
-                        <span class="detail-value" style="color: #10b981; font-weight: bold;" id="status">Payé</span>
+                        <span class="detail-value">
+                            <span id="status">Payé</span>
+                            <span class="payment-status-badge status-paid" id="statusBadge">PAYÉ</span>
+                        </span>
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">Méthode:</span>
@@ -306,27 +334,36 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="total-amount">
                 <div class="total-label">Montant Total Payé</div>
                 <div class="amount" id="amount">0 XOF</div>
+                <div style="margin-top: 10px; font-size: 1rem;">
+                    <span id="productsAmount">Produits: 0 XOF</span> •
+                    <span id="deliveryAmount">Livraison: 0 XOF</span>
+                </div>
             </div>
-            
-            <div class="whatsapp-notice">
+
+            <!-- NOUVEAU : Section pour envoyer sur WhatsApp -->
+            <div class="whatsapp-notice" id="whatsappSection">
                 <div class="whatsapp-icon">📱</div>
                 <div>
-                    <strong>Confirmation WhatsApp envoyée !</strong><br>
-                    Vous recevrez un message sur WhatsApp dans quelques instants avec tous les détails de votre commande.
+                    <strong>Envoyez votre commande sur WhatsApp</strong><br>
+                    Cliquez sur le bouton ci-dessous pour informer AfroKingVap de votre commande.
                 </div>
             </div>
         </div>
-        
+
+        <!-- Boutons mis à jour -->
         <div class="buttons-container">
+            <button class="btn btn-primary" id="sendWhatsAppBtn">
+                <i>📱</i> Envoyer commande sur WhatsApp
+            </button>
             <button class="btn btn-secondary" onclick="returnToStore()">
                 <i>🏪</i> Retourner sur le Site
             </button>
         </div>
-        
+
         <div class="footer">
             <p>Merci de votre confiance ! Pour toute question, contactez notre service client.</p>
             <p>© 2025 AfroKingVap - Tous droits réservés</p>
@@ -334,11 +371,15 @@
     </div>
 
     <script>
-        // Récupérer les paramètres de l'URL
+        // ===== CONFIGURATION =====
+        const WHATSAPP_NUMBER = '221781802575';
+        let currentOrderData = null;
+
+        // ===== FONCTIONS UTILITAIRES =====
         function getUrlParams() {
             const params = new URLSearchParams(window.location.search);
             const paramsObj = {};
-            
+
             paramsObj.orderId = params.get('orderId') || 'N/A';
             paramsObj.amount = params.get('amount') || '0';
             paramsObj.token = params.get('token') || 'N/A';
@@ -348,13 +389,24 @@
             paramsObj.phone = params.get('phone') || '';
             paramsObj.currency = params.get('currency') || 'XOF';
             paramsObj.timestamp = params.get('timestamp') || new Date().toISOString().split('T')[0];
-            
+            paramsObj.deliveryZone = params.get('deliveryZone') || '';
+            paramsObj.deliveryPrice = params.get('deliveryPrice') || '0';
+            paramsObj.paymentMethod = params.get('paymentMethod') || 'mobile';
+
             paramsObj.customer = paramsObj.customer.replace(/%20/g, ' ').replace(/%2520/g, ' ');
-            
+
             return paramsObj;
         }
-        
-        // Formater la date
+
+        function formatCurrency(amount) {
+            const numAmount = parseInt(amount) || 0;
+            return new Intl.NumberFormat('fr-FR', {
+                style: 'currency',
+                currency: 'XOF',
+                minimumFractionDigits: 0
+            }).format(numAmount);
+        }
+
         function formatDate(dateString) {
             try {
                 if (dateString.includes('T')) {
@@ -371,49 +423,180 @@
                     const day = dateString.substring(6, 8);
                     const hour = dateString.substring(8, 10);
                     const minute = dateString.substring(10, 12);
-                    
+
                     return `${day}/${month}/${year} à ${hour}:${minute}`;
                 }
             } catch (e) {
                 return new Date().toLocaleDateString('fr-FR');
             }
         }
-        
-        // Formater le montant
-        function formatAmount(amount) {
-            const numAmount = parseInt(amount) || 0;
-            return new Intl.NumberFormat('fr-FR', {
-                style: 'currency',
-                currency: 'XOF',
-                minimumFractionDigits: 0
-            }).format(numAmount);
+
+        // ===== RÉCUPÉRATION DES DONNÉES DE COMMANDE =====
+        async function loadOrderData(orderId) {
+            try {
+                // Essayer de récupérer depuis localStorage
+                const storedData = localStorage.getItem('afrokingvap_order_' + orderId);
+                if (storedData) {
+                    return JSON.parse(storedData);
+                }
+
+                // Sinon, récupérer depuis les paramètres URL
+                const params = getUrlParams();
+                return {
+                    orderId: orderId,
+                    customer: {
+                        name: params.customer,
+                        phone: params.phone,
+                        address: ''
+                    },
+                    delivery: {
+                        zone: params.deliveryZone,
+                        price: parseInt(params.deliveryPrice) || 0
+                    },
+                    payment: {
+                        method: params.paymentMethod,
+                        status: 'paid'
+                    },
+                    totals: {
+                        products: parseInt(params.amount) - parseInt(params.deliveryPrice),
+                        delivery: parseInt(params.deliveryPrice) || 0,
+                        total: parseInt(params.amount)
+                    },
+                    products: [
+                        {
+                            title: 'Commande AfroKingVap',
+                            price: formatCurrency(params.amount),
+                            quantity: 1
+                        }
+                    ],
+                    timestamp: params.timestamp
+                };
+            } catch (error) {
+                console.error('Erreur chargement données:', error);
+                return null;
+            }
         }
-        
-        // Mettre à jour l'interface
-        function updateUI() {
+
+        // ===== GÉNÉRATION MESSAGE WHATSAPP =====
+        function generateWhatsAppMessage(orderData) {
+            let message = `Bonjour AfroKingVap ! Je viens de finaliser mon paiement pour la commande suivante :\n\n`;
+            message += `📦 COMMANDE N° ${orderData.orderId}\n\n`;
+
+            message += `📋 DÉTAILS DE LA COMMANDE\n`;
+            if (orderData.products && orderData.products.length > 0) {
+                orderData.products.forEach((item, index) => {
+                    message += `${index + 1}. ${item.title} x${item.quantity} (${item.price})\n`;
+                });
+            } else {
+                message += `Commande AfroKingVap\n`;
+            }
+
+            message += `\n💰 DÉTAILS FINANCIERS\n`;
+            message += `• Total produits: ${formatCurrency(orderData.totals.products)}\n`;
+            message += `• Frais livraison (${orderData.delivery.zone}): ${formatCurrency(orderData.totals.delivery)}\n`;
+            message += `• Total payé: ${formatCurrency(orderData.totals.total)}\n\n`;
+
+            message += `👤 INFORMATIONS CLIENT\n`;
+            message += `• Nom: ${orderData.customer.name}\n`;
+            message += `• Téléphone: +221${orderData.customer.phone}\n`;
+            message += `• Zone livraison: ${orderData.delivery.zone}\n`;
+            if (orderData.customer.address) {
+                message += `• Adresse détaillée: ${orderData.customer.address}\n`;
+            }
+
+            message += `\n💳 PAIEMENT\n`;
+            message += `• Méthode: ${orderData.payment.method === 'mobile' ? 'MOBILE MONEY' : 'CASH'}\n`;
+            message += `• Statut: PAIEMENT EFFECTUÉ ✅\n`;
+            message += `• Transaction sécurisée\n\n`;
+
+            message += `🆔 RÉFÉRENCE\n`;
+            message += `• Date: ${formatDate(orderData.timestamp)}\n`;
+            message += `• ID Commande: ${orderData.orderId}\n\n`;
+
+            message += `📞 SUPPORT: +221 78 192 97 20\n`;
+            message += `🏪 AFROKINGVAP - Vape & Accessoires`;
+
+            return message;
+        }
+
+        // ===== OUVERTURE WHATSAPP =====
+        function openWhatsAppWithMessage(message) {
+            const encodedMessage = encodeURIComponent(message);
+            const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`;
+
+            // Ouvrir dans un nouvel onglet
+            window.open(whatsappUrl, '_blank');
+
+            // Feedback utilisateur
+            const whatsappBtn = document.getElementById('sendWhatsAppBtn');
+            const originalText = whatsappBtn.innerHTML;
+            whatsappBtn.innerHTML = '<i>✅</i> Message envoyé !';
+            whatsappBtn.disabled = true;
+
+            setTimeout(() => {
+                whatsappBtn.innerHTML = originalText;
+                whatsappBtn.disabled = false;
+            }, 3000);
+        }
+
+        // ===== MISE À JOUR DE L'INTERFACE =====
+        async function updateUI() {
             const params = getUrlParams();
-            
-            document.getElementById('orderId').textContent = params.orderId;
-            document.getElementById('orderDate').textContent = formatDate(params.timestamp);
+
+            // Récupérer les données complètes
+            currentOrderData = await loadOrderData(params.orderId);
+
+            if (!currentOrderData) {
+                console.error('Données de commande non trouvées');
+                return;
+            }
+
+            // Mettre à jour les éléments
+            document.getElementById('orderId').textContent = currentOrderData.orderId;
+            document.getElementById('orderDate').textContent = formatDate(currentOrderData.timestamp);
             document.getElementById('reference').textContent = params.token.substring(0, 16) + '...';
-            document.getElementById('customerName').textContent = params.customer;
-            document.getElementById('customerPhone').textContent = params.phone || 'Non renseigné';
-            document.getElementById('customerEmail').textContent = params.email || 'Non renseigné';
-            document.getElementById('amount').textContent = formatAmount(params.amount);
-            document.getElementById('status').textContent = 'Payé';
-            document.getElementById('paymentMethod').textContent = 'Mobile Money';
+            document.getElementById('deliveryZone').textContent = currentOrderData.delivery.zone;
+            document.getElementById('customerName').textContent = currentOrderData.customer.name;
+            document.getElementById('customerPhone').textContent = currentOrderData.customer.phone || 'Non renseigné';
+            document.getElementById('customerAddress').textContent = currentOrderData.customer.address || 'Non renseigné';
+            document.getElementById('amount').textContent = formatCurrency(currentOrderData.totals.total);
+            document.getElementById('productsAmount').textContent = `Produits: ${formatCurrency(currentOrderData.totals.products)}`;
+            document.getElementById('deliveryAmount').textContent = `Livraison: ${formatCurrency(currentOrderData.totals.delivery)}`;
+            document.getElementById('paymentMethod').textContent = currentOrderData.payment.method === 'mobile' ? 'Mobile Money' : 'Cash';
             document.getElementById('transactionNumber').textContent = params.token;
-            
-            document.title = `Paiement Réussi - ${formatAmount(params.amount)}`;
+
+            // Afficher la section WhatsApp
+            document.getElementById('whatsappSection').style.display = 'flex';
+
+            document.title = `Paiement Réussi - ${formatCurrency(currentOrderData.totals.total)}`;
         }
-        
-        // Retourner à la boutique
+
+        // ===== GESTION ÉVÉNEMENTS =====
+        document.getElementById('sendWhatsAppBtn').addEventListener('click', function () {
+            if (currentOrderData) {
+                const message = generateWhatsAppMessage(currentOrderData);
+                openWhatsAppWithMessage(message);
+            } else {
+                alert('Les données de commande ne sont pas disponibles. Veuillez réessayer.');
+            }
+        });
+
         function returnToStore() {
             window.location.href = 'https://afrokingvap.com';
         }
-        
-        // Initialiser la page
-        document.addEventListener('DOMContentLoaded', updateUI);
+
+        // ===== INITIALISATION =====
+        document.addEventListener('DOMContentLoaded', async function () {
+            await updateUI();
+
+            // Auto-send après 3 secondes (optionnel)
+            // setTimeout(() => {
+            //     if (currentOrderData && confirm('Voulez-vous envoyer automatiquement votre commande sur WhatsApp ?')) {
+            //         const message = generateWhatsAppMessage(currentOrderData);
+            //         openWhatsAppWithMessage(message);
+            //     }
+            // }, 3000);
+        });
     </script>
 </body>
 </html>

@@ -77,7 +77,11 @@ namespace FusionPayProxy.Services
                     Status = "initiating",
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow,
-                    FusionPayToken = null // ✅ DÉFINIR À NULL AU DÉPART
+                    FusionPayToken = null,
+                    // NOUVEAUX CHAMPS
+                    DeliveryZone = request.DeliveryZone,
+                    DeliveryPrice = request.DeliveryPrice,
+                    PaymentMethod = request.PaymentMethod
                 };
 
                 await _dbContext.Transactions.AddAsync(dbTransaction);
@@ -89,11 +93,12 @@ namespace FusionPayProxy.Services
                 var fusionPayRequest = new
                 {
                     totalPrice = (int)request.Amount,
-                    article = request.GetFusionPayArticleFormat(),
+                    article = $"{request.GetFusionPayArticleFormat()} | Livraison: {request.DeliveryZone}",
                     numeroSend = request.GetFormattedPhone(),
                     nomclient = request.CustomerName,
                     personal_Info = request.GetFusionPayPersonalInfo(dbTransaction.Id),
-                    return_url = $"{_settings.YourApiBaseUrl}/thank-you.html?orderId={Uri.EscapeDataString(request.OrderId)}",
+                    // URL de retour avec TOUS les paramètres
+                    return_url = request.GenerateThankYouUrl(dbTransaction.FusionPayToken ?? "", _settings.YourApiBaseUrl + "/thank-you.html"),
                     webhook_url = $"{_settings.YourApiBaseUrl}/api/webhook/fusionpay"
                 };
 
@@ -235,19 +240,24 @@ namespace FusionPayProxy.Services
                         _logger.LogInformation("✅ Payment initiated successfully for order {OrderId}. Token: {Token}",
                             request.OrderId, token);
 
+                        // Mettre à jour la réponse
                         string completeReturnUrl = request.GenerateThankYouUrl(token, $"{_settings.YourApiBaseUrl}/thank-you.html");
 
                         return new PaymentResponse
                         {
                             Success = true,
                             PaymentUrl = paymentUrl,
-                            ReturnUrl = completeReturnUrl,
+                            ReturnUrl = completeReturnUrl, // URL avec TOUS les paramètres
                             Token = token,
                             Message = message,
                             TransactionId = dbTransaction.Id,
                             OrderId = request.OrderId,
                             Timestamp = DateTime.UtcNow,
-                            ExpiresAt = DateTime.UtcNow.AddMinutes(30)
+                            ExpiresAt = DateTime.UtcNow.AddMinutes(30),
+                            // NOUVEAUX CHAMPS
+                            DeliveryZone = request.DeliveryZone,
+                            DeliveryPrice = request.DeliveryPrice,
+                            PaymentMethod = request.PaymentMethod
                         };
                     }
                     else

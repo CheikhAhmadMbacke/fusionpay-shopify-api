@@ -33,8 +33,6 @@ namespace FusionPayProxy.Models
         [Column(TypeName = "decimal(18,2)")]
         public decimal Amount { get; set; }
 
-        [MaxLength(50)]
-        public string PaymentMethod { get; set; } = string.Empty; // orange, mtn, moov
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
@@ -62,5 +60,13 @@ namespace FusionPayProxy.Models
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal? Fees { get; set; } // frais
+        [Column("delivery_zone")]
+        public string? DeliveryZone { get; set; }
+
+        [Column("delivery_price")]
+        public decimal DeliveryPrice { get; set; }
+
+        [Column("payment_method")]
+        public string? PaymentMethod { get; set; }
     }
 }

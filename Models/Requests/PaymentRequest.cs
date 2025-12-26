@@ -33,6 +33,14 @@ namespace FusionPayProxy.Models.Requests
         [EmailAddress(ErrorMessage = "Email invalide")]
         [JsonPropertyName("customerEmail")]
         public string? CustomerEmail { get; set; }
+        [JsonPropertyName("deliveryZone")]
+        public string? DeliveryZone { get; set; }
+
+        [JsonPropertyName("deliveryPrice")]
+        public decimal DeliveryPrice { get; set; }
+
+        [JsonPropertyName("paymentMethod")]
+        public string? PaymentMethod { get; set; } // "cash" ou "mobile"
 
         // Articles dynamiques depuis Shopify
         [JsonPropertyName("articles")]
@@ -111,35 +119,28 @@ namespace FusionPayProxy.Models.Requests
         /// </summary>
         public string GenerateThankYouUrl(string token, string baseUrl)
         {
-            if (string.IsNullOrEmpty(baseUrl))
-                throw new ArgumentException("Base URL cannot be null or empty", nameof(baseUrl));
+            var parameters = new Dictionary<string, string>
+            {
+                ["orderId"] = OrderId,
+                ["token"] = token,
+                ["amount"] = Amount.ToString(),
+                ["customer"] = Uri.EscapeDataString(CustomerName),
+                ["phone"] = CustomerPhone,
+                ["paymentMethod"] = PaymentMethod ?? "mobile",
+                ["timestamp"] = DateTime.UtcNow.ToString("yyyyMMddHHmmss")
+            };
 
-            if (string.IsNullOrEmpty(token))
-                throw new ArgumentException("Token cannot be null or empty", nameof(token));
+            // Ajouter les paramètres de livraison si disponibles
+            if (!string.IsNullOrEmpty(DeliveryZone))
+            {
+                parameters["deliveryZone"] = Uri.EscapeDataString(DeliveryZone);
+            }
 
-            var urlBuilder = new UriBuilder(baseUrl.TrimEnd('/'));
-            var query = System.Web.HttpUtility.ParseQueryString(urlBuilder.Query);
+            parameters["deliveryPrice"] = DeliveryPrice.ToString();
 
-            // Paramètres obligatoires
-            query["orderId"] = OrderId;
-            query["amount"] = Amount.ToString("F0"); // Format sans décimales
-            query["token"] = token;
-
-            // Paramètres optionnels
-            if (!string.IsNullOrEmpty(OrderNumber))
-                query["orderNumber"] = OrderNumber;
-
-            if (!string.IsNullOrEmpty(CustomerEmail))
-                query["email"] = CustomerEmail;
-
-            query["customer"] = Uri.EscapeDataString(CustomerName);
-            query["phone"] = CustomerPhone;
-            query["currency"] = "XOF";
-            query["timestamp"] = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
-            query["v"] = "1.0"; // Version de l'URL
-
-            urlBuilder.Query = query.ToString();
-            return urlBuilder.ToString();
+            // Construire l'URL
+            var queryString = string.Join("&", parameters.Select(p => $"{p.Key}={p.Value}"));
+            return $"{baseUrl}?{queryString}";
         }
 
         /// <summary>
@@ -171,5 +172,7 @@ namespace FusionPayProxy.Models.Requests
         {
             return new string(CustomerPhone.Where(char.IsDigit).ToArray());
         }
+
+
     }
 }

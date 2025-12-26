@@ -24,6 +24,12 @@ namespace FusionPayProxy.Models.Responses
 
         [JsonPropertyName("orderId")]
         public string OrderId { get; set; } = string.Empty;
+        [JsonPropertyName("deliveryZone")]
+        public string? DeliveryZone { get; set; }
+        [JsonPropertyName("deliveryPrice")]
+        public decimal DeliveryPrice { get; set; }
+        [JsonPropertyName("paymentMethod")]
+        public string? PaymentMethod { get; set; } // "cash" ou "mobile"
 
         [JsonPropertyName("errorMessage")]
         public string? ErrorMessage { get; set; }
